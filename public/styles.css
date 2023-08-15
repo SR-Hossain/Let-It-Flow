@@ -1,0 +1,109 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,400;0,700;1,100&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Roboto', sans-serif;
+}
+html {
+    font-size: 100%;
+    scroll-behavior: smooth;
+}
+body {
+    font-weight: 800;
+    overflow: hidden;
+}
+*{
+    font-size: 25px;
+}
+
+main{
+    display: flex;
+    height: 100vh;
+}
+
+.questions{
+    flex: 2;
+    width: 40%;
+    padding: 10px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+}
+.one_quesion{
+    display: flex;
+}
+.right-panel {
+  flex: 3;
+  width: 60%;
+  padding: 10px;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+}
+
+
+
+.btn {
+/*     min-width: 200px; */
+/*     font-size: 16px; */
+/*     font-weight: 600; */
+    color: #fff;
+    cursor: pointer;
+/*     margin: 20px; */
+/*     height: 55px; */
+    text-align:left;
+    border: none;
+    background-size: 300% 100%;
+
+    border-radius: 10px;
+    moz-transition: all .4s ease-in-out;
+    -o-transition: all .4s ease-in-out;
+    -webkit-transition: all .4s ease-in-out;
+    transition: all .4s ease-in-out;
+
+    background-image: linear-gradient(to right, #29323c, #485563, #2b5876, #4e4376);
+    box-shadow: 0 4px 15px 0 rgba(45, 54, 65, 0.75);
+
+}
+
+.btn:hover {
+    background-position: 100% 0;
+    moz-transition: all .4s ease-in-out;
+    -o-transition: all .4s ease-in-out;
+    -webkit-transition: all .4s ease-in-out;
+    transition: all .4s ease-in-out;
+}
+
+.btn:focus {
+    outline: none;
+}
+
+.user-id {
+    width: 30%;
+    flex: 1;
+    padding: 10px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    background-image: linear-gradient(to right, #0ba360, #3cba92, #30dd8a, #2bb673) !important;
+    box-shadow: 0 4px 15px 0 rgba(23, 168, 108, 0.75);
+    border-radius: 0px !important;
+    padding: 10px;
+}
+.post {
+    width: 70%;
+    flex: 3;
+    padding: 10px;
+    box-sizing: border-box;
+    border: none;
+    border-radius: 0px !important;
+    padding: 10px;
+}
+.post-created {
+    font-size: 50% !important;
+}
+
+.fake-link {
+  color: inherit; /* Inherit the color from the parent */
+  text-decoration: none; /* Remove underline */
+  cursor: pointer; /* Show pointer cursor on hover */
+}
