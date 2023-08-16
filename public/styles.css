@@ -1,13 +1,27 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,400;0,700;1,100&display=swap');
 
+@media (max-width: 768px) {
+  /* Hide the drag bar and left panel on small screens */
+  .drag-bar,
+  .questions {
+    display: none;
+  }
+
+  /* Show only the right panel on small screens */
+  .right-panel {
+    flex: 1;
+  }
+}
+
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Roboto Thin', sans-serif;
 }
 html {
+    background: black;
     font-size: 100%;
     scroll-behavior: smooth;
 }
@@ -27,6 +41,7 @@ reply{
     background: red;
 }
 .topQuestionPanel{
+    width: 100%;
     padding: 10px;
     margin-bottom: 10px;
     display: flex;
@@ -34,25 +49,18 @@ reply{
     z-index: 2;
 }
 
-.questions{
-    flex: 2;
-    width: 40%;
+
+.selected_question{
     padding: 10px;
-    box-sizing: border-box;
-    border: 1px solid #ccc;
+    display: flex;
 }
-.one_quesion{
+.one_question{
     display: flex;
 }
 .right-panel {
     display:flex;
     flex-direction: column;
-  flex: 3;
-  width: 60%;
-  padding: 10px;
-  box-sizing: border-box;
-  border: 1px solid #ccc;
-  overflow-y: auto;
+    padding: 5px;
 }
 
 
@@ -61,7 +69,7 @@ reply{
 /*     min-width: 200px; */
 /*     font-size: 16px; */
 /*     font-weight: 600; */
-    color: #fff;
+    color: #f5f5f5;
     cursor: pointer;
 /*     margin: 20px; */
 /*     height: 55px; */
@@ -93,8 +101,19 @@ reply{
 }
 
 .user-id {
-    width: 30%;
+    width: 25%;
     flex: 1;
+    padding: 10px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    background-image: linear-gradient(to right, #0ba360, #3cba92, #30dd8a, #2bb673) !important;
+    box-shadow: 0 4px 15px 0 rgba(23, 168, 108, 0.75);
+    border-radius: 0px !important;
+    padding: 10px;
+}
+.user-id-short {
+    width: 30%;
+    flex:1;
     padding: 10px;
     box-sizing: border-box;
     border: 1px solid #ccc;
@@ -121,12 +140,17 @@ reply{
   text-decoration: none; /* Remove underline */
   cursor: pointer; /* Show pointer cursor on hover */
 }
+.fake-link-long {
+  color: inherit; /* Inherit the color from the parent */
+  text-decoration: none; /* Remove underline */
+  cursor: pointer; /* Show pointer cursor on hover */
+  flex: 4;
+}
 
 .comments {
     color: #fff;
     cursor: pointer;
     margin: 20px;
-    height: 55px;
     text-align:left;
     border: none;
     background-size: 300% 100%;
@@ -155,4 +179,138 @@ reply{
 .replies {
     flex: 1;
     overflow-y: auto;
+}
+
+.comment-box {
+  background-color: #1e1e1e;
+  padding: 10px;
+  position: relative;
+  border-top: 1px solid #333;
+  display: flex;
+  align-items: center;
+}
+
+.comment-input {
+  flex: 1;
+  border: none;
+  border-radius: 20px;
+  padding: 10px 20px;
+  font-size: 14px;
+  background-color: #333;
+  color: white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  resize: none;
+  outline: none;
+  margin-right: 10px;
+}
+
+.comment-submit-btn {
+  background-color: #0084ff;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.comment-submit-btn:hover {
+  background-color: #005daa;
+}
+
+.comment-input::placeholder {
+  color: #aaa;
+}
+
+/* Style for creating a chat-like appearance */
+.comment-box::before {
+  content: '';
+  display: block;
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 10px solid #1e1e1e;
+}
+
+.fa-arrow-left{
+    padding: 10px;
+}
+.comment-submit-btn {
+  background-color: #0084ff;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.comment-submit-btn:hover {
+  background-color: #005daa;
+}
+
+/* Style the icon inside the button */
+.comment-submit-btn i {
+  transform: rotate(45deg); /* Rotate the paper plane icon */
+}
+
+
+.sender {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: #777 !important;
+}
+
+.user-id {
+  font-weight: bold;
+  margin-right: 8px;
+}
+
+.formatted-time {
+  font-size: 12px;
+  font-style: italic;
+}
+
+.comments {
+    color:  #FFFDD0;
+  /* Your existing styles for the comments button */
+  /* ... */
+}
+
+
+/* Set up flex layout */
+.split-container {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+}
+
+.drag-bar {
+/*   cursor: ew-resize; */
+  flex: 0 0 auto;
+  width: 5px;
+  cursor: col-resize;
+  background-color: silver;
+}
+
+.questions,
+.right-panel {
+  flex: 1 1 auto;
+  padding: 20px;
 }

@@ -46,7 +46,7 @@ app.get('/getQuestions', (req, res) => {
 
 app.get('/getReplies=:postId', (req, res) => {
   const postId = req.params.postId;
-  db.query('select * from posts where root_post='+postId, (err, results) => {
+  db.query(`SELECT *, DATE_FORMAT(post_created, '%h:%i:%s%p, %d %b %Y') AS formatted_time FROM posts WHERE root_post=${postId} ORDER BY post_created DESC`, (err, results) => {
     if(err){
       return res.status(500).json({error: 'Error fetching posts'});
 

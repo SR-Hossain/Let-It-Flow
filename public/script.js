@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const postId = window.location.pathname.substr(1); // Extract postId from the URL
   const topQuestionPanel = document.querySelector('.topQuestionPanel');
   const repliesContainer = document.querySelector('.replies');
-
+  const commentBox = document.querySelector('.comment-box')
   fetch('/getQuestions')
     .then(response => response.json())
     .then(posts => {
@@ -34,31 +34,31 @@ document.addEventListener('DOMContentLoaded', () => {
     .then(response => response.json())
     .then(posts => {
       posts.forEach(post => {
-
         let rootPost = post.root_post;
         if (rootPost === null)rootPost = ' ';
         topQuestionPanel.innerHTML = `
-        <div class="back" onclick="gotoRootPost(${post.post_id})">
           <button>
           <a href="/${rootPost}">
             <i class="fas fa-arrow-left"></i> <!-- Font Awesome left arrow icon -->
             </a>
           </button>
-        </div>
-        <div class="selected_question"></div>
-            <div class="one_quesion">
-              <button class="btn post">
-                <a class="fake-link" href="/${post.post_id}">
+          <div class="selected_question btn post">
+                <a class="fake-link-long" href="/${post.post_id}">
                   <div class="post">${post.post}</div>
                 </a>
-              </button>
-              <button class="btn user-id">
+              <button class="btn user-id-short">
                 ${post.user_id}
                 <div class="post-created">${post.post_created}</div>
               </button>
             </div>
           </div>
         `;
+        commentBox.innerHTML = `
+            <textarea class="comment-input" placeholder="Add a comment..."></textarea>
+            <button class="comment-submit-btn">
+              <i class="fas fa-paper-plane"></i> <!-- Font Awesome paper plane icon -->
+            </button>
+          `;
       });
     })
     .catch(error => {
@@ -76,6 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
           replyDiv.innerHTML = `
           <a href="/${reply.post_id}">
             <button class="comments">
+              <div class="sender">${reply.user_id} --> ${reply.formatted_time} </div>
               <div class="comment"></div>
               <div class="clickOnReplies">
                 ${reply.post}
@@ -84,6 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </a>
           `;
           repliesContainer.appendChild(replyDiv);
+
         })
     })
     .catch(error => {
@@ -102,3 +104,49 @@ function showComments(postId, postText) {
   const selected_question = document.querySelector('.selected_question');
   selected_question.textContent = postText+' ';
 }
+
+const dragBar = document.getElementById('dragBar');
+const wrapper = dragBar.closest('.drag-bar');
+const leftPanel = document.querySelector('.questions');
+const rightPanel = document.querySelector('.right-panel');
+let isDragging = false;
+let initialOffsetX = 0;
+
+
+
+// Check screen width and disable drag bar if small screen
+const screenWidth = window.innerWidth;
+if (screenWidth <= 768) {
+  dragBar.style.display = 'none';
+}
+else {
+  dragBar.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    const startX = e.clientX;
+
+    initialOffsetX = startX - dragBar.getBoundingClientRect().left;
+
+
+    document.addEventListener('mousemove', resize);
+    document.addEventListener('mouseup', stopDragging);
+
+    function resize(e) {
+      if (!isDragging) return;
+      const offsetX = e.clientX - initialOffsetX;
+      const newLeftWidth = offsetX;
+
+      // Set minimum width for panels
+      if (newLeftWidth >= 500 && newLeftWidth <= window.innerWidth - 500) {
+        leftPanel.style.width = `${newLeftWidth}px`;
+        rightPanel.style.width = `${window.innerWidth - newLeftWidth}px`;
+      }
+    }
+
+    function stopDragging() {
+      isDragging = false;
+      document.removeEventListener('mousemove', resize);
+      document.removeEventListener('mouseup', stopDragging);
+    }
+  });
+}
+
