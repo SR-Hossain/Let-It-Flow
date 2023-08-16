@@ -1,55 +1,58 @@
-Sure, here's the text formatted as a `README.md` for GitHub:
-
 # Let-It-Flow
 
-Let-It-Flow is a platform focused on mental health care, similar to StackOverflow.
+Mental Care related platform similar to stackOverflow
 
 ## Prerequisites
 
-Before you begin, make sure you have the following software installed:
+- Node.js
+- MariaDB
 
-- [Node.js](https://nodejs.org/)
-- [MariaDB](https://mariadb.org/)
+## Database Tables
 
-## Database Setup
+### Table: posts
 
-1. Create a MariaDB database named `let_it_flow`.
+| Field        | Type         | Null | Key | Default             | Extra          |
+|--------------|--------------|------|-----|---------------------|----------------|
+| post_id      | int(11)      | NO   | PRI | NULL                | auto_increment |
+| user_id      | varchar(255) | YES  | MUL | NULL                |                |
+| post         | text         | NO   |     | NULL                |                |
+| post_created | datetime     | YES  |     | current_timestamp() |                |
+| anonymous    | tinyint(1)   | YES  |     | 0                   |                |
+| vote         | int(11)      | YES  |     | 0                   |                |
+| root_post    | int(11)      | YES  | MUL | NULL                |                |
 
-2. After creating the database, run the following SQL command to see the available tables:
+### Table: users
 
-   ```sql
-   MariaDB [let_it_flow]> SHOW TABLES;
-   ```
+| Field    | Type         | Null | Key | Default | Extra |
+|----------|--------------|------|-----|---------|-------|
+| user_id  | varchar(255) | NO   | PRI | NULL    |       |
+| password | varchar(255) | NO   |     | NULL    |       |
+| role     | varchar(255) | YES  |     | NULL    |       |
 
-3. You'll see two tables: `posts` and `users`.
+## Setup
 
-   - `posts` table:
+1. Install Node.js and MariaDB.
 
-     ```sql
-     MariaDB [let_it_flow]> DESCRIBE posts;
-     ```
+2. Create a MariaDB database named `let_it_flow`.
 
-   - `users` table:
+3. Run the provided SQL commands in your MariaDB shell to create and describe the tables.
 
-     ```sql
-     MariaDB [let_it_flow]> DESCRIBE users;
-     ```
-
-4. Adjust your database information in the `server.js` file to match your setup.
+4. Update your database information in `server.js`.
 
 ## Running the Server
 
-To start the server, open your terminal and execute the following command:
+1. Open your terminal.
 
-```bash
-node server.js
-```
+2. Navigate to the project directory.
 
-This will launch the Let-It-Flow platform. You can access it through your web browser.
+3. Run the following command:
 
-Remember to take care of security considerations when handling sensitive data and deploying applications.
+   ```bash
+   node server.js
+   ```
 
-Feel free to contribute or modify the project as needed!
-```
+This will start the Let-It-Flow platform. Access it through your web browser.
 
-Copy and paste this content into a `README.md` file in your GitHub repository, and GitHub should automatically format it correctly.
+Please ensure security best practices when handling sensitive data.
+
+Feel free to contribute and modify the project as needed!
