@@ -1,6 +1,6 @@
 # Let-It-Flow
 
-Mental Care related platform similar to stackOverflow
+Mental Care related platform similar to stackOverflow...
 
 ## Prerequisites
 
