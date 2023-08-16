@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,400;0,700;1,100&display=swap');
 
+
 * {
     margin: 0;
     padding: 0;
@@ -11,16 +12,26 @@ html {
     scroll-behavior: smooth;
 }
 body {
-    font-weight: 800;
     overflow: hidden;
 }
 *{
-    font-size: 25px;
+    font-size: 15px;
 }
 
 main{
     display: flex;
     height: 100vh;
+}
+
+reply{
+    background: red;
+}
+.topQuestionPanel{
+    padding: 10px;
+    margin-bottom: 10px;
+    display: flex;
+    box-sizing:border-box;
+    z-index: 2;
 }
 
 .questions{
@@ -34,11 +45,14 @@ main{
     display: flex;
 }
 .right-panel {
+    display:flex;
+    flex-direction: column;
   flex: 3;
   width: 60%;
   padding: 10px;
   box-sizing: border-box;
   border: 1px solid #ccc;
+  overflow-y: auto;
 }
 
 
@@ -106,4 +120,39 @@ main{
   color: inherit; /* Inherit the color from the parent */
   text-decoration: none; /* Remove underline */
   cursor: pointer; /* Show pointer cursor on hover */
+}
+
+.comments {
+    color: #fff;
+    cursor: pointer;
+    margin: 20px;
+    height: 55px;
+    text-align:left;
+    border: none;
+    background-size: 300% 100%;
+    padding: 15px;
+    border-radius: 20px;
+    moz-transition: all .4s ease-in-out;
+    -o-transition: all .4s ease-in-out;
+    -webkit-transition: all .4s ease-in-out;
+    transition: all .4s ease-in-out;
+    background-image: linear-gradient(to right, #29323c, #485563, #2b5876, #4e4376);
+    box-shadow: 0 4px 15px 0 rgba(45, 54, 65, 0.75);
+
+}
+.comments:hover {
+    background-position: 100% 0;
+    moz-transition: all .4s ease-in-out;
+    -o-transition: all .4s ease-in-out;
+    -webkit-transition: all .4s ease-in-out;
+    transition: all .4s ease-in-out;
+}
+
+.comments:focus {
+    outline: none;
+}
+
+.replies {
+    flex: 1;
+    overflow-y: auto;
 }

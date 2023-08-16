@@ -44,8 +44,26 @@ app.get('/getQuestions', (req, res) => {
   });
 });
 
-app.get('/getReplies', (req, res) => {
-  db.query('select * from posts where root_post=')
+app.get('/getReplies=:postId', (req, res) => {
+  const postId = req.params.postId;
+  db.query('select * from posts where root_post='+postId, (err, results) => {
+    if(err){
+      return res.status(500).json({error: 'Error fetching posts'});
+
+    }
+    return res.status(200).json(results);
+  });
+});
+
+app.get('/getPost=:postId', (req, res) => {
+  const postId = req.params.postId;
+  db.query('select * from posts where post_id='+postId, (err, results) => {
+    if(err){
+      return res.status(500).json({error: 'Error fetching posts'});
+
+    }
+    return res.status(200).json(results);
+  });
 });
 
 // Serve index.html when accessing the root URL
