@@ -66,6 +66,48 @@ app.get('/getPost=:postId', (req, res) => {
   });
 });
 
+app.get('/getHowManyVote=:postId', (req, res) => {
+  const postId = req.params.postId;
+  db.query(`select vote, (select count(root_post) from posts where root_post=${postId}) as comments from posts where post_id=${postId}`, (err, results)=> {
+      if(err){
+        return res.status(500).json({error: 'Error fetching posts'});
+      }
+      return res.status(200).json({ voteCount: results[0].vote, commentCount: results[0].comments });
+    });
+});
+
+// Define a route for handling votes
+app.get('/vote', (req, res) => {
+  const postId = req.query.postId;
+  const voteType = req.query.voteType;
+
+  // Validate voteType to ensure it's either 'upvote' or 'downvote'
+  if (voteType !== 'upvote' && voteType !== 'downvote') {
+    return res.status(400).json({ error: 'Invalid vote type' });
+  }
+
+  // Use prepared statements and parameter binding to prevent SQL injection
+  const sql = `UPDATE posts SET vote = CASE
+    WHEN ? = 'upvote' THEN vote + 1
+    WHEN ? = 'downvote' THEN vote - 1
+  END
+  WHERE post_id = ?`;
+
+  db.query(sql, [voteType, voteType, postId], (err, result) => {
+    if (err) {
+      console.error('Error updating vote:', err);
+      return res.status(500).json({error: 'Error fetching posts'});
+    }
+  });
+  db.query(`select vote from posts where post_id=${postId}`, (err, results)=> {
+      if(err){
+        return res.status(500).json({error: 'Error fetching posts'});
+      }
+      return res.status(200).json({ voteCount: results[0].vote });
+    });
+});
+
+
 // Serve index.html when accessing the root URL
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

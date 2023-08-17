@@ -1,17 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,400;0,700;1,100&display=swap');
 
-@media (max-width: 768px) {
-  /* Hide the drag bar and left panel on small screens */
-  .drag-bar,
-  .questions {
-    display: none;
-  }
 
-  /* Show only the right panel on small screens */
-  .right-panel {
-    flex: 1;
-  }
+body {
+    overflow: hidden;
 }
+*{
+    font-size: 20px;
+}
+
+
 
 
 * {
@@ -25,12 +22,6 @@ html {
     font-size: 100%;
     scroll-behavior: smooth;
 }
-body {
-    overflow: hidden;
-}
-*{
-    font-size: 15px;
-}
 
 main{
     display: flex;
@@ -40,6 +31,13 @@ main{
 reply{
     background: red;
 }
+
+.questions{
+    width: 50vw;
+    flex-direction: column;
+}
+
+
 .topQuestionPanel{
     width: 100%;
     padding: 10px;
@@ -211,7 +209,7 @@ reply{
   border-radius: 50%;
   width: 36px;
   height: 36px;
-  font-size: 18px;
+  font-size: 22px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -252,7 +250,7 @@ reply{
   border-radius: 50%;
   width: 36px;
   height: 36px;
-  font-size: 18px;
+  font-size: 22px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -309,8 +307,73 @@ reply{
   background-color: silver;
 }
 
-.questions,
 .right-panel {
   flex: 1 1 auto;
   padding: 20px;
+}
+
+.reply-section {
+  display: flex;
+  justify-content: space-between;
+  /* ... Other styles ... */
+}
+
+
+
+.vote-section {
+  flex: 1;
+  padding: 50px 0px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.vote-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.vote-count {
+/*   margin-top: 10px; */
+  color: violet;
+}
+
+.small-btn {
+  padding: 3px;
+  margin: 1px;
+}
+
+
+/* Style the dividing line */
+.divider {
+  width: 100%;
+  height: 1px;
+  background-color: #ccc;
+  margin: 10px 0; /* Adjust the margin as needed */
+}
+
+/* Style the "X replies" text */
+.replies-info {
+  font-size: 14px;
+  color: #777;
+  margin: 10px; /* Adjust the margin as needed */
+}
+
+
+@media (max-width: 1000px) {
+  /* Hide the drag bar and left panel on small screens */
+  .drag-bar,
+  .questions {
+    display: none;
+  }
+  *{
+    font-size: 40px;
+  }
+
+  /* Show only the right panel on small screens */
+  .right-panel {
+    flex: 1;
+  }
 }

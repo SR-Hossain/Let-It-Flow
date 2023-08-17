@@ -50,9 +50,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${post.user_id}
                 <div class="post-created">${post.post_created}</div>
               </button>
+                  <button class="upvote-btn small-btn btn" onclick="handleVote(${post.post_id}, 'upvote', this.nextElementSibling)"><i class="fas fa-chevron-up"></i></button>
+                  <button class="vote_count small-btn btn"></button> <!-- Corrected this line -->
+                  <button class="downvote-btn small-btn btn" onclick="handleVote(${post.post_id}, 'downvote', this.previousElementSibling)"><i class="fas fa-chevron-down"></i></button>
+                  <div class="replies-info"></div>
             </div>
+
           </div>
         `;
+        updateVoteText(topQuestionPanel.querySelector('.vote_count'), topQuestionPanel.querySelector('.replies-info'), post.post_id);
         commentBox.innerHTML = `
             <textarea class="comment-input" placeholder="Add a comment..."></textarea>
             <button class="comment-submit-btn">
@@ -74,16 +80,24 @@ document.addEventListener('DOMContentLoaded', () => {
         replies.forEach(reply => {
           const replyDiv = document.createElement('div');
           replyDiv.innerHTML = `
-          <a href="/${reply.post_id}">
-            <button class="comments">
-              <div class="sender">${reply.user_id} --> ${reply.formatted_time} </div>
-              <div class="comment"></div>
-              <div class="clickOnReplies">
-                ${reply.post}
+            <div class="reply-section">
+              <a href="/${reply.post_id}" class="fake-link comments">
+                <div class="sender">${reply.user_id} → ${reply.formatted_time}</div>
+                <div class="clickOnReplies">${reply.post}</div>
+                <div class="divider"></div> <!-- Dividing line -->
+                <div class="replies-info"></div>
+              </a>
+              <div class="vote-section">
+                <div class="vote-buttons">
+                  <button class="upvote-btn small-btn btn" onclick="handleVote(${reply.post_id}, 'upvote', this.nextElementSibling)"><i class="fas fa-chevron-up"></i></button>
+                  <button class="vote_count small-btn btn"></button> <!-- Corrected this line -->
+                  <button class="downvote-btn small-btn btn" onclick="handleVote(${reply.post_id}, 'downvote', this.previousElementSibling)"><i class="fas fa-chevron-down"></i></button>
+                </div>
               </div>
-            </button>
-            </a>
+            </div>
           `;
+
+          updateVoteText(replyDiv.querySelector('.vote_count'), replyDiv.querySelector('.replies-info'), reply.post_id);
           repliesContainer.appendChild(replyDiv);
 
         })
@@ -105,48 +119,103 @@ function showComments(postId, postText) {
   selected_question.textContent = postText+' ';
 }
 
-const dragBar = document.getElementById('dragBar');
-const wrapper = dragBar.closest('.drag-bar');
-const leftPanel = document.querySelector('.questions');
-const rightPanel = document.querySelector('.right-panel');
-let isDragging = false;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const dragbar = document.querySelector('.drag-bar');
+const left = document.querySelector('.questions');
+const right= document.querySelector('.right-panel');
+let flag = false;
 let initialOffsetX = 0;
-
-
-
-// Check screen width and disable drag bar if small screen
 const screenWidth = window.innerWidth;
-if (screenWidth <= 768) {
-  dragBar.style.display = 'none';
-}
-else {
-  dragBar.addEventListener('mousedown', (e) => {
-    isDragging = true;
-    const startX = e.clientX;
+let newLeftWidth = left.style.width;
 
-    initialOffsetX = startX - dragBar.getBoundingClientRect().left;
+
+
+dragbar.addEventListener('mousedown', (e)=> {
+    flag = true;
+    const startX = e.clientX;
+    left.style.display = "flex";
+    right.style.display = "flex";
+
+    initialOffsetX = startX - dragbar.getBoundingClientRect().left;
 
 
     document.addEventListener('mousemove', resize);
     document.addEventListener('mouseup', stopDragging);
 
     function resize(e) {
-      if (!isDragging) return;
+      if (!flag) return;
       const offsetX = e.clientX - initialOffsetX;
-      const newLeftWidth = offsetX;
+      newLeftWidth = offsetX;
 
       // Set minimum width for panels
-      if (newLeftWidth >= 500 && newLeftWidth <= window.innerWidth - 500) {
-        leftPanel.style.width = `${newLeftWidth}px`;
-        rightPanel.style.width = `${window.innerWidth - newLeftWidth}px`;
-      }
+        left.style.width = `${newLeftWidth}px`;
+
     }
 
     function stopDragging() {
-      isDragging = false;
+      flag = false;
+      if(newLeftWidth <= window.innerWidth/4 ){
+            left.style.width = `0px`;
+            left.style.display = 'None';
+            right.style.flex = '1';
+        }
+        else if(newLeftWidth >= 3*window.innerWidth/4){
+            right.style.display = 'None';
+            left.style.display = '1';
+            left.style.width = window.innerWidth+'px';
+        }
       document.removeEventListener('mousemove', resize);
       document.removeEventListener('mouseup', stopDragging);
     }
-  });
+});
+
+
+function updateVoteText(vote_text, comment_number, postId){
+  fetch(`/getHowManyVote=${postId}`)
+    .then(response => response.json()) // Fix the typo here
+    .then(data => {
+      if (data.voteCount !== undefined)
+        vote_text.textContent = data.voteCount;
+      if (data.commentCount !== undefined)
+        comment_number.textContent = data.commentCount+` replies`;
+      })
+    .catch(error => {
+      console.error('Error fetching replies:', error);
+    });
 }
+
+
+function handleVote(postId, voteType, vote_text) {
+  console.log('function e ashse');
+  fetch(`/vote?postId=${postId}&voteType=${voteType}`)
+    .then(response => response.json()) // Fix the typo here
+    .then(data => {
+      if (data.voteCount !== undefined)
+        vote_text.textContent = data.voteCount;
+      })
+    .catch(error => {
+      console.error('Error fetching replies:', error);
+    });
+}
+
+
 
