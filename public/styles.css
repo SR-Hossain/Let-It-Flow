@@ -32,8 +32,9 @@ reply{
     background: red;
 }
 
+
 .questions{
-    width: 50vw;
+    width: 100%;
     flex-direction: column;
 }
 
@@ -63,7 +64,7 @@ reply{
 
 
 
-.btn {
+.btn, .fullPage {
 /*     min-width: 200px; */
 /*     font-size: 16px; */
 /*     font-weight: 600; */
@@ -217,6 +218,11 @@ reply{
   transition: background-color 0.3s ease;
 }
 
+.search-input {
+  color: silver;
+  background: none;
+}
+
 .comment-submit-btn:hover {
   background-color: #005daa;
 }
@@ -242,6 +248,7 @@ reply{
 
 .fa-arrow-left{
     padding: 10px;
+    color: #ADD8E6;
 }
 .comment-submit-btn {
   background-color: #0084ff;
@@ -301,10 +308,16 @@ reply{
 
 .drag-bar {
 /*   cursor: ew-resize; */
-  flex: 0 0 auto;
+  flex: 0;
   width: 5px;
+  padding: 2px;
   cursor: col-resize;
   background-color: silver;
+}
+
+.left-panel {
+  display: flex;
+  flex-direction: column;
 }
 
 .right-panel {
@@ -362,10 +375,107 @@ reply{
 }
 
 
+
+
+
+
+
+.header-container {
+    padding: 1rem;
+    margin: 10px;
+    min-height: 3.5rem;
+}
+
+.header-container .header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header .toggle-button {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 4rem;
+    height: 4rem;
+    border-radius: 50%;
+    cursor: pointer;
+    transform: all .3s ease;
+}
+
+.header .toggle-button:hover {
+    background-color: #f5f5f5;
+}
+
+.header .toggle-button i {
+    position: absolute;
+    font-size: 1.8rem;
+    transition: all .3s ease-in-out;
+}
+
+.header .toggle-button .fa-arrow-left {
+    visibility: hidden;
+    opacity: 0;
+}
+
+.header .search-box {
+    position: relative;
+    border: .1rem solid white;
+    border-radius: 2.2rem;
+    width: 100%;
+    padding: 1.5rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all .3s ease-in-out;
+}
+
+.header .search-box i {
+    color: white;
+    font-size: 1.6rem;
+    opacity: .6;
+}
+
+.header .search-box input {
+    position: relative;
+    border: none;
+    outline: none;
+    width: 100%;
+}
+
+.header .search-box input::placeholder {
+    color: #707579;
+    background: none;
+    font-size: 1.6rem;
+    font-weight: 500;
+    opacity: .6;
+}
+
+.header.focus .search-box {
+    border: .2rem solid silver;
+}
+
+.header.focus .search-box i {
+    color: white;
+}
+
+.header.focus .toggle-button .fa-bars {
+    transform: rotate(180deg);
+    opacity: 0;
+}
+
+.header.focus .toggle-button .fa-arrow-left {
+    transform: rotate(360deg);
+    visibility: visible;
+    opacity: 1;
+}
+
+
 @media (max-width: 1000px) {
   /* Hide the drag bar and left panel on small screens */
   .drag-bar,
-  .questions {
+  .left-panel {
     display: none;
   }
   *{

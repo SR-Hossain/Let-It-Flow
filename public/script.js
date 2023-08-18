@@ -3,31 +3,34 @@ document.addEventListener('DOMContentLoaded', () => {
   const postId = window.location.pathname.substr(1); // Extract postId from the URL
   const topQuestionPanel = document.querySelector('.topQuestionPanel');
   const repliesContainer = document.querySelector('.replies');
-  const commentBox = document.querySelector('.comment-box')
-  fetch('/getQuestions')
-    .then(response => response.json())
-    .then(posts => {
-      posts.forEach(post => {
-        const postDiv = document.createElement('div');
-        postDiv.innerHTML = `
-          <div class="one_quesion">
-            <button class="btn user-id">
-              ${post.user_id}
-              <div class="post-created">${post.post_created}</div>
-            </button>
-              <button class="btn post">
-                <a class="fake-link" href="/${post.post_id}">
-                  <div class="post">${post.post}</div>
-                </a>
-              </button>
-          </div>
-        `;
-        questionsContainer.appendChild(postDiv);
-      });
-    })
-    .catch(error => {
-      console.error('Error fetching posts:', error);
-    });
+  const commentBox = document.querySelector('.comment-box');
+  const rightPanel = document.querySelector('.right-panel');
+  const leftPanel = document.querySelector('.left-panel');
+  showQuestionsInLeftPanel();
+  // fetch('/getQuestions')
+  //   .then(response => response.json())
+  //   .then(posts => {
+  //     posts.forEach(post => {
+  //       const postDiv = document.createElement('div');
+  //       postDiv.innerHTML = `
+  //         <div class="one_quesion">
+  //           <button class="btn user-id">
+  //             ${post.user_id}
+  //             <div class="post-created">${post.post_created}</div>
+  //           </button>
+  //             <button class="btn post">
+  //               <a class="fake-link" href="/${post.post_id}">
+  //                 <div class="post">${post.post}</div>
+  //               </a>
+  //             </button>
+  //         </div>
+  //       `;
+  //       questionsContainer.appendChild(postDiv);
+  //     });
+  //   })
+  //   .catch(error => {
+  //     console.error('Error fetching posts:', error);
+  //   });
 
 
   fetch('/getPost='+postId)
@@ -37,10 +40,8 @@ document.addEventListener('DOMContentLoaded', () => {
         let rootPost = post.root_post;
         if (rootPost === null)rootPost = ' ';
         topQuestionPanel.innerHTML = `
-          <button>
-          <a href="/${rootPost}">
+          <button onclick="sendTo('/${rootPost}')">
             <i class="fas fa-arrow-left"></i> <!-- Font Awesome left arrow icon -->
-            </a>
           </button>
           <div class="selected_question btn post">
                 <a class="fake-link-long" href="/${post.post_id}">
@@ -68,6 +69,10 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     })
     .catch(error => {
+      leftPanel.style.flex = '1';
+      leftPanel.style.display= 'flex';
+      rightPanel.style.display = 'None';
+
       console.error('Error fetching posts:', error);
     });
 
@@ -108,7 +113,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
+
+
+
+    const header = document.querySelector('.header');
+    const inputSearch = document.querySelector('.search-box-click');
+    const faArrowLeft = document.querySelector('.fa-arrow-left');
+    // files = document.querySelector('#files'),
+    // chatBox = document.querySelector('#chatBox'),
+    // msg = document.querySelector('#Msg');
+
+    inputSearch.addEventListener('focus', () => {
+        header.classList.add('focus');
+    });
+
+    faArrowLeft.addEventListener('click', () => {
+        header.classList.remove('focus');
+        showQuestionsInLeftPanel();
+    });
+
+
+    inputSearch.addEventListener('keypress', (event) => {
+        const searchQuery = inputSearch.value;
+        fetch('/getResults?q='+searchQuery)
+          .then(response => response.json())
+          .then(posts => {
+            questionsContainer.innerHTML = '';
+            posts.forEach(post => {
+              const postDiv = document.createElement('div');
+              postDiv.innerHTML = `
+                <div class="one_quesion">
+                  <button class="btn user-id">
+                    ${post.user_id}
+                    <div class="post-created">${post.post_created}</div>
+                  </button>
+                    <button class="btn post">
+                      <a class="fake-link" href="/${post.post_id}">
+                        <div class="post">${post.post}</div>
+                      </a>
+                    </button>
+                </div>
+              `;
+              questionsContainer.appendChild(postDiv);
+            });
+          })
+          .catch(error => {
+            console.error('Error fetching posts:', error);
+          });
+      // }
+    });
+
+
+
 });
+
+
+function sendTo(url) {
+  window.location.href = url;
+}
 
 
 
@@ -117,6 +179,42 @@ function showComments(postId, postText) {
   console.log('ashse eikhaneo');
   const selected_question = document.querySelector('.selected_question');
   selected_question.textContent = postText+' ';
+}
+
+
+function showQuestionsInLeftPanel(){
+  const questionsContainer = document.querySelector('.questions');
+  const postId = window.location.pathname.substr(1); // Extract postId from the URL
+  const topQuestionPanel = document.querySelector('.topQuestionPanel');
+  const repliesContainer = document.querySelector('.replies');
+  const commentBox = document.querySelector('.comment-box');
+  const rightPanel = document.querySelector('.right-panel');
+  const leftPanel = document.querySelector('.left-panel');
+  fetch('/getQuestions')
+    .then(response => response.json())
+    .then(posts => {
+      questionsContainer.innerHTML='';
+      posts.forEach(post => {
+        const postDiv = document.createElement('div');
+        postDiv.innerHTML = `
+          <div class="one_quesion">
+            <button class="btn user-id">
+              ${post.user_id}
+              <div class="post-created">${post.post_created}</div>
+            </button>
+              <button class="btn post">
+                <a class="fake-link" href="/${post.post_id}">
+                  <div class="post">${post.post}</div>
+                </a>
+              </button>
+          </div>
+        `;
+        questionsContainer.appendChild(postDiv);
+      });
+    })
+    .catch(error => {
+      console.error('Error fetching posts:', error);
+    });
 }
 
 
@@ -133,14 +231,8 @@ function showComments(postId, postText) {
 
 
 
-
-
-
-
-
-
 const dragbar = document.querySelector('.drag-bar');
-const left = document.querySelector('.questions');
+const left = document.querySelector('.left-panel');
 const right= document.querySelector('.right-panel');
 let flag = false;
 let initialOffsetX = 0;
@@ -216,6 +308,7 @@ function handleVote(postId, voteType, vote_text) {
       console.error('Error fetching replies:', error);
     });
 }
+
 
 
 

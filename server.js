@@ -2,6 +2,11 @@ const express = require('express');
 const path = require('path');
 const bodyParser = require('body-parser');
 const mysql = require('mysql');
+const session = require('express-session');
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
+
+
 
 const app = express();
 const port = 3000;
@@ -28,6 +33,25 @@ db.connect(err => {
 // Export the database connection
 module.exports = db;
 
+
+passport.use(new LocalStrategy(
+  (username, password, done) => {
+    // Validate the user's credentials
+    // Call done() with user object if authentication succeeds
+    // Call done(null, false) if authentication fails
+  }
+));
+
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser((id, done) => {
+  // Fetch user details from database using id
+  done(null, user);
+});
+
+
 // Serve static files from the 'public' folder
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -38,6 +62,33 @@ app.get('/getQuestions', (req, res) => {
     if (err) {
       console.error('Error fetching posts:', err);
       return res.status(500).json({ error: 'Error fetching posts' });
+    }
+
+    return res.status(200).json(results);
+  });
+});
+
+
+app.get('/getResults', (req, res) => {
+
+  const searchQuery = req.query.q;
+  const searchWords = searchQuery.split(' ');
+
+  // Generate placeholders for the search words
+  const placeholders = searchWords.map(() => '?').join(', ');
+
+  // Construct the WHERE clause to search for each word
+  const whereClause = '(' + searchWords.map(word => `(post LIKE '%${word}%')+(user_id like '${word}%')`).join(' + ')  + ')';
+
+  const queryParams = searchWords.map(word => `%${word}%`);
+
+  // Use the WHERE clause and placeholders in the query
+  const query = `SELECT *, ${whereClause} AS match_count FROM posts WHERE ${whereClause} ORDER BY match_count DESC`;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error fetching similar posts:', err);
+      return res.status(500).json({ error: 'Error fetching similar posts' });
     }
 
     return res.status(200).json(results);
@@ -120,6 +171,22 @@ app.get('/:postId', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
   // res.send(`Displaying post ${postId}`);
 });
+
+
+
+app.post('/login',
+  passport.authenticate('local', {
+    successRedirect: '/',
+    failureRedirect: '/login',
+    failureFlash: true
+  })
+);
+
+app.get('/logout', (req, res) => {
+  req.logout();
+  res.redirect('/login');
+});
+
 
 app.listen(port, () => {
   console.log('Server started at ' + port);

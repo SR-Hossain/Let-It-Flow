@@ -9,10 +9,24 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
   <title>Let It Flow</title>
 </head>
-<body>
+<body class="fullPage">
   <main>
     <div class="split-container">
-      <div class="questions"></div>
+      <div class="left-panel">
+        <div class="header-container">
+          <div class="header">
+              <div class="toggle-button">
+                  <i class="fas fa-bars" aria-hidden="true"></i>
+                  <i class="fas fa-arrow-left" aria-hidden="true"></i>
+              </div>
+              <div class="search-box btn">
+                  <i class="fas fa-search" aria-hidden="true"></i>
+                  <input type="text" placeholder="Search" class="search-input search-box-click">
+              </div>
+          </div>
+        </div>
+        <div class="questions"></div>
+      </div>
       <div class="drag-bar" id="dragBar"></div>
       <div class="right-panel">
         <div class="topQuestionPanel"></div>
