@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
-    inputSearch.addEventListener('keypress', (event) => {
+    inputSearch.addEventListener('keyup', (event) => {
         const searchQuery = inputSearch.value;
         fetch('/getResults?q='+searchQuery)
           .then(response => response.json())
@@ -154,6 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </button>
                 </div>
               `;
+              if(postId==post.post_id)postDiv.querySelector('.post').classList.add('selected_post');
               questionsContainer.appendChild(postDiv);
             });
           })
@@ -210,6 +211,7 @@ function showQuestionsInLeftPanel(){
           </div>
         `;
         questionsContainer.appendChild(postDiv);
+        if(postId==post.post_id)postDiv.querySelector('.post').classList.add('selected_post');
       });
     })
     .catch(error => {

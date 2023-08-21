@@ -83,7 +83,7 @@ app.get('/getResults', (req, res) => {
   const queryParams = searchWords.map(word => `%${word}%`);
 
   // Use the WHERE clause and placeholders in the query
-  const query = `SELECT *, ${whereClause} AS match_count FROM posts WHERE ${whereClause} ORDER BY match_count DESC`;
+  const query = `SELECT unique *, ${whereClause} AS match_count FROM posts WHERE ${whereClause} ORDER BY match_count DESC`;
 
   db.query(query, (err, results) => {
     if (err) {

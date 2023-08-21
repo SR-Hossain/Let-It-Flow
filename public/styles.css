@@ -62,9 +62,13 @@ reply{
     padding: 5px;
 }
 
+.fullPage {
+  background-image: linear-gradient(to right, #29323c, #485563, #2b5876, #4e4376);
+    box-shadow: 0 4px 15px 0 rgba(45, 54, 65, 0.75);
+}
 
 
-.btn, .fullPage {
+.btn, .selected_question {
 /*     min-width: 200px; */
 /*     font-size: 16px; */
 /*     font-weight: 600; */
@@ -87,7 +91,7 @@ reply{
 
 }
 
-.btn:hover {
+.btn:hover, .btn.selected_post {
     background-position: 100% 0;
     moz-transition: all .4s ease-in-out;
     -o-transition: all .4s ease-in-out;
@@ -98,6 +102,8 @@ reply{
 .btn:focus {
     outline: none;
 }
+
+
 
 .user-id {
     width: 25%;
@@ -405,7 +411,8 @@ reply{
 }
 
 .header .toggle-button:hover {
-    background-color: #f5f5f5;
+
+    background-color: grey;
 }
 
 .header .toggle-button i {
