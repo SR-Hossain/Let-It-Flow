@@ -11,6 +11,38 @@ Mental Care related platform similar to stackOverflow...
 
 ### Table: posts
 
+
+
+```mysql
+DELIMITER //
+CREATE TRIGGER check_password
+BEFORE INSERT ON users
+FOR EACH ROW
+BEGIN
+    DECLARE contains_letter BOOLEAN;
+    DECLARE contains_digit BOOLEAN;
+
+    SET contains_letter = FALSE;
+    SET contains_digit = FALSE;
+
+    -- Check if password contains at least one letter and one digit
+    SET @password = NEW.password;
+
+    SELECT @password REGEXP '[a-zA-Z]' INTO contains_letter;
+    SELECT @password REGEXP '[0-9]' INTO contains_digit;
+
+    IF LENGTH(@password) < 8 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Password must be at least 8 characters';
+    END IF;
+
+    IF NOT (contains_letter AND contains_digit) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Password must contain both letters and numbers';
+    END IF;
+END;
+//
+DELIMITER ;
+```
+
 | Field        | Type         | Null | Key | Default             | Extra          |
 |--------------|--------------|------|-----|---------------------|----------------|
 | post_id      | int(11)      | NO   | PRI | NULL                | auto_increment |
@@ -29,11 +61,40 @@ Mental Care related platform similar to stackOverflow...
 | password | varchar(255) | NO   |     | NULL    |       |
 | role     | varchar(255) | YES  |     | NULL    |       |
 
+```mysql
+DELIMITER //
+CREATE PROCEDURE insert_user(IN p_user_id VARCHAR(255), IN p_password VARCHAR(255))
+BEGIN
+    DECLARE user_exists INT;
+    SET user_exists = 0;
+
+    -- Check if the user already exists
+    SELECT COUNT(*) INTO user_exists FROM users WHERE user_id = p_user_id;
+
+    -- If the user exists, raise an error
+    IF user_exists > 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'User already exists with name ' || p_user_id;
+    ELSE
+        -- Insert the user
+        INSERT INTO users(user_id, password) VALUES (p_user_id, p_password);
+    END IF;
+END;
+//
+DELIMITER ;
+```
 
 
 ## Table: Reactions
 
-```bash
+| Field   | Type         | Null | Key | Default | Extra |
+|---------|--------------|------|-----|---------|-------|
+| user_id | varchar(255) | NO   | PRI | NULL    |       |
+| post_id | int(11)      | NO   | PRI | NULL    |       |
+| vote    | int(11)      | NO   |     | 0       |       |
+
+
+```mysql
 CREATE TABLE reactions (
   user_id VARCHAR(255) NOT NULL references users on delete cascade,
   post_id INT(11) NOT NULL references posts on delete cascade,

@@ -19,6 +19,7 @@ const screenWidth = window.innerWidth;
 let newLeftWidth = left.style.width;
 let msgPortal = document.createElement('div');
 msgPortal.innerHTML = `
+    <div class="letter-image">
     <div class="animated-mail">
       <div class="back-fold"></div>
       <div class="letter">
@@ -34,9 +35,8 @@ msgPortal.innerHTML = `
       <div class="left-fold"></div>
     </div>
     <div class="shadow"></div>
+    <div>
 `;
-msgPortal.classList.add('letter-image');
-
 let anonymousButton = document.createElement('div');
 anonymousButton.innerHTML = `
 <input class="pristine" type="checkbox" name="toggle" value="on">
@@ -580,12 +580,31 @@ async function navToolBar(){
       <span class="letter">U</span>
       <span class="letter">T</span>
     </div>
-  `;
 
-  if(username==='')questionsContainer.querySelector('.bounce-logout').style.display='None';
+
+
+    <div class="main">
+        <span>P</span>
+        <span class="spacious">
+          <textarea type="text" class="nobg"></textarea>
+        </span>
+        <span>S</span>
+        <span>T</span>
+        <span>
+          <button class="text comment-submit-btn">
+              <i class="text fas fa-paper-plane new-post-submit"></i> <!-- Font Awesome paper plane icon -->
+            </button>
+          </span>
+    </div>
+  `;
+  const checkbox = questionsContainer.querySelector('input[type="checkbox"]');
+  if(username===''){
+    questionsContainer.querySelector('.bounce-logout').style.display='None';
+    checkbox.style.display = 'None';
+  }
   else{
     questionsContainer.querySelector('.bounce-login').style.display = 'none';
-    const checkbox = questionsContainer.querySelector('input[type="checkbox"]');
+
     if (username === 'Anonymous') {
       checkbox.classList.add('checkbox-not-toggled');
     } else {
@@ -593,11 +612,44 @@ async function navToolBar(){
     }
   }
 
+  questionsContainer.querySelector('.new-post-submit').addEventListener('click', function(){
+    newPostSubmit(questionsContainer.querySelector('.nobg').textContent);
+  });
+
 
   questionsContainer.appendChild(msgPortal);
   // questionsContainer.appendChild(anonymousButton);
 
   leftPanel.style.width = window.innerWidth/2+'px';
+}
+
+
+
+function newPostSubmit(txt){
+    const root_post = null;
+    fetch('/postSubmit', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: localStorage.getItem('authToken')
+    },
+    body: JSON.stringify({ root_post, txt })
+  })
+    .then(response => response.json())
+    .then(result => {
+        console.log(result);
+        vote_text.textContent = result.voteCount;
+        try{
+          vote_text.previousElementSibling.classList.remove('selected_post');
+          vote_text.nextElementSibling.classList.remove('selected_post');
+          if(result.userReaction === 1) vote_text.previousElementSibling.classList.add('selected_post');
+          else if(result.userReaction === -1) vote_text.nextElementSibling.classList.add('selected_post');
+        }catch(error){console.log('error: '+postId)}
+    })
+    .catch(error => {
+      console.log('hoilo na');
+      // Error handling
+    });
 }
 
 

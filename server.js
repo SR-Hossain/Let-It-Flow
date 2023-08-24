@@ -75,6 +75,18 @@ app.post('/getUsername', authenticateUser, (req, res) => {
 });
 
 
+app.post('/postSubmit', authenticateUser, (req, res) => {
+  const username = req.user.username;
+  db.query(`insert role from users where user_id=?`, username, (err, results)=>{
+    if(err)return res.status(500).json({error: 'kisu ekta error hoise'});
+    if(results[0].role)return res.status(200).json({user_id: username});
+    return res.status(200).json({user_id: 'Anonymous'});
+  });
+
+});
+
+
+
 
 app.post('/toggleAnonymous', authenticateUser, (req, res)=>{
   const userId = req.user.username;
