@@ -3,16 +3,21 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const mysql = require('mysql');
 const session = require('express-session');
-const passport = require('passport');
-const LocalStrategy = require('passport-local').Strategy;
-
+const bcrypt = require('bcrypt');
+const expressJwt = require('express-jwt');
+const jwt = require('jsonwebtoken');
+const salt = '$2b$10$ZXcDtjTdm3Wf4.tQJRaJjO';
 
 
 const app = express();
 const port = 3000;
+// Your JWT secret key
+const jwtSecretKey = 'f4.tQJRaJjOzI5DqYZ6.guqqKFw14fVjYvXvU1CjGS';
+
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+
 
 // Create a MySQL connection
 const db = mysql.createConnection({
@@ -34,26 +39,58 @@ db.connect(err => {
 module.exports = db;
 
 
-passport.use(new LocalStrategy(
-  (username, password, done) => {
-    // Validate the user's credentials
-    // Call done() with user object if authentication succeeds
-    // Call done(null, false) if authentication fails
-  }
-));
-
-passport.serializeUser((user, done) => {
-  done(null, user.id);
-});
-
-passport.deserializeUser((id, done) => {
-  // Fetch user details from database using id
-  done(null, user);
-});
 
 
 // Serve static files from the 'public' folder
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Middleware to verify JWT token and check authentication
+const authenticateUser = (req, res, next) => {
+  const token = req.headers.authorization;
+
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  jwt.verify(token, jwtSecretKey, (err, decoded) => {
+    if (err) {
+      return res.status(403).json({ message: 'Failed to authenticate token' });
+    }
+
+    req.user = decoded;
+    next();
+  });
+};
+
+
+
+app.post('/getUsername', authenticateUser, (req, res) => {
+  const username = req.user.username;
+  db.query(`select role from users where user_id=?`, username, (err, results)=>{
+    if(err)return res.status(500).json({error: 'kisu ekta error hoise'});
+    if(results[0].role)return res.status(200).json({user_id: username});
+    return res.status(200).json({user_id: 'Anonymous'});
+  });
+
+});
+
+
+
+app.post('/toggleAnonymous', authenticateUser, (req, res)=>{
+  const userId = req.user.username;
+  const command = `
+  update users
+  set role=case
+  when role='anonymous' then null
+  else 'anonymous'
+  end
+  where user_id='${userId}';
+  `;
+  db.query(command, (err, results)=>{
+    if(err)return res.status(500).json({error: 'Error fetching posts that are reacted'});
+    return res.status(200).json(results);
+  })
+});
 
 
 //getQuesions function
@@ -63,7 +100,6 @@ app.get('/getQuestions', (req, res) => {
       console.error('Error fetching posts:', err);
       return res.status(500).json({ error: 'Error fetching posts' });
     }
-
     return res.status(200).json(results);
   });
 });
@@ -119,7 +155,13 @@ app.get('/getPost=:postId', (req, res) => {
 
 app.get('/getHowManyVote=:postId', (req, res) => {
   const postId = req.params.postId;
-  db.query(`select vote, (select count(root_post) from posts where root_post=${postId}) as comments from posts where post_id=${postId}`, (err, results)=> {
+  const query = `
+    select
+    (select count(root_post) from posts where root_post=${postId}) as comments,
+    COALESCE((select sum(vote) from reactions where post_id=${postId}),0) as vote
+    from posts where post_id=${postId};
+  `;
+  db.query(query, (err, results)=> {
       if(err){
         return res.status(500).json({error: 'Error fetching posts'});
       }
@@ -127,36 +169,50 @@ app.get('/getHowManyVote=:postId', (req, res) => {
     });
 });
 
-// Define a route for handling votes
-app.get('/vote', (req, res) => {
-  const postId = req.query.postId;
-  const voteType = req.query.voteType;
 
-  // Validate voteType to ensure it's either 'upvote' or 'downvote'
-  if (voteType !== 'upvote' && voteType !== 'downvote') {
-    return res.status(400).json({ error: 'Invalid vote type' });
-  }
 
-  // Use prepared statements and parameter binding to prevent SQL injection
-  const sql = `UPDATE posts SET vote = CASE
-    WHEN ? = 'upvote' THEN vote + 1
-    WHEN ? = 'downvote' THEN vote - 1
-  END
-  WHERE post_id = ?`;
 
-  db.query(sql, [voteType, voteType, postId], (err, result) => {
-    if (err) {
-      console.error('Error updating vote:', err);
-      return res.status(500).json({error: 'Error fetching posts'});
-    }
-  });
-  db.query(`select vote from posts where post_id=${postId}`, (err, results)=> {
-      if(err){
-        return res.status(500).json({error: 'Error fetching posts'});
-      }
-      return res.status(200).json({ voteCount: results[0].vote });
+
+
+app.post('/setReaction', authenticateUser, (req, res)=>{
+  const userId = req.user.username;
+  const postId = req.body.postId;
+  const vote = req.body.voteType;
+  const command = `
+  INSERT INTO reactions (user_id, post_id, vote)
+  VALUES ('${userId}', ${postId}, ${vote})
+  ON DUPLICATE KEY UPDATE vote = CASE
+    WHEN vote = ${vote} THEN 0
+    ELSE ${vote}
+  END;
+  `;
+  db.query(command, (err, results)=>{
+    if(err)return res.status(500).json({error: 'Error fetching posts'});
+    db.query('delete from reactions where vote=0');
+    db.query('select coalesce(sum(vote),0) as vote from reactions where post_id=?', postId, (err, results)=>{
+        if(err)return res.status(500).json({error: 'Error fetching posts'});
+        const voteCount = results[0].vote;
+        db.query(`select sum(vote) as userReaction from reactions where user_id=? and post_id=?`, [userId, postId], (err, results)=>{
+          const userReaction = results[0].userReaction;
+          return res.status(200).json({ voteCount: voteCount, userReaction: userReaction });
+        })
     });
+  })
 });
+
+
+app.post('/getPostWhereCurrentUserReactionExists', authenticateUser, (req, res)=>{
+  const userId = req.user.username;
+  const command = `select post_id, vote from reactions where user_id='${userId}'`;
+  console.log(command);
+  db.query(command, (err, results)=>{
+    if(err)return res.status(500).json({error: 'Error fetching posts that are reacted'});
+    return res.status(200).json(results);
+  })
+});
+
+
+
 
 
 // Serve index.html when accessing the root URL
@@ -165,29 +221,49 @@ app.get('/', (req, res) => {
 });
 
 app.get('/:postId', (req, res) => {
-  const postId = req.params.postId; // Get the postId from the URL
-  // Fetch the post from the database using postId
-  // Render the post details page
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
-  // res.send(`Displaying post ${postId}`);
 });
 
 
 
-app.post('/login',
-  passport.authenticate('local', {
-    successRedirect: '/',
-    failureRedirect: '/login',
-    failureFlash: true
-  })
-);
+// Handling the /login route
+app.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+    if (!username) return res.status(401).json({ message: 'Authentication failed' });
 
-app.get('/logout', (req, res) => {
-  req.logout();
-  res.redirect('/login');
+    db.query(`select password from users where user_id=?`, username, (err, results)=>{
+      if(err)return  res.status(500).json({error: 'Error!!!'});
+      const hashedPass = results[0].password;
+      const isPasswordValid = bcrypt.compare(password, hashedPass);
+      if (!isPasswordValid) return res.status(401).json({ message: 'Authentication failed' });
+      const token = jwt.sign({ username: username }, jwtSecretKey, {expiresIn: '1h'});
+      console.log(token);
+      return res.json({ token, message: 'Login successful' });
+    });
 });
+
+
+// Handling the /signup route
+app.post('/signup', async (req, res) => {
+    const { username, password } = req.body;
+
+    if (!username) return res.status(401).json({ message: 'Authentication failed' });
+
+    const hashedPass = await bcrypt.hash(password, salt);
+
+    db.query(`insert into users(user_id, password) values(?, ?)`, [username, password], (err, results)=>{
+      if(err)return res.status(409).json({ error: err.sqlMessage });
+      db.query(`update users set password=? where user_id=?`, [hashedPass, username]);
+      return res.status(200).json(results);
+    });
+});
+
 
 
 app.listen(port, () => {
   console.log('Server started at ' + port);
 });
+
+
+
+

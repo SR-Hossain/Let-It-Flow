@@ -29,6 +29,20 @@ Mental Care related platform similar to stackOverflow...
 | password | varchar(255) | NO   |     | NULL    |       |
 | role     | varchar(255) | YES  |     | NULL    |       |
 
+
+
+## Table: Reactions
+
+```bash
+CREATE TABLE reactions (
+  user_id VARCHAR(255) NOT NULL references users on delete cascade,
+  post_id INT(11) NOT NULL references posts on delete cascade,
+  vote INT(11) NOT NULL DEFAULT 0,
+  PRIMARY KEY (user_id, post_id)
+);
+```
+
+
 ## Setup
 
 1. Install Node.js and MariaDB.

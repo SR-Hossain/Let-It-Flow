@@ -1,38 +1,250 @@
+const questionsContainer = document.querySelector('.questions');
+const postId = window.location.pathname.substr(1); // Extract postId from the URL
+const topQuestionPanel = document.querySelector('.topQuestionPanel');
+const repliesContainer = document.querySelector('.replies');
+const commentBox = document.querySelector('.comment-box');
+const rightPanel = document.querySelector('.right-panel');
+const leftPanel = document.querySelector('.left-panel');
+const header = document.querySelector('.header');
+const inputSearch = document.querySelector('.search-box-click');
+const faArrowLeft = document.querySelector('.fa-arrow-left');
+const faBars = document.querySelector('.fa-bars');
+const dragbar = document.querySelector('.drag-bar');
+const left = document.querySelector('.left-panel');
+const right= document.querySelector('.right-panel');
+const searchBar = document.querySelector('.search-box');
+let flag = false;
+let initialOffsetX = 0;
+const screenWidth = window.innerWidth;
+let newLeftWidth = left.style.width;
+let msgPortal = document.createElement('div');
+msgPortal.innerHTML = `
+    <div class="animated-mail">
+      <div class="back-fold"></div>
+      <div class="letter">
+        <div class="letter-border"></div>
+        <div class="letter-title"></div>
+        <div class="letter-context"></div>
+        <div class="letter-stamp">
+          <div class="letter-stamp-inner"></div>
+        </div>
+      </div>
+      <div class="top-fold"></div>
+      <div class="body"></div>
+      <div class="left-fold"></div>
+    </div>
+    <div class="shadow"></div>
+`;
+msgPortal.classList.add('letter-image');
+
+let anonymousButton = document.createElement('div');
+anonymousButton.innerHTML = `
+<input class="pristine" type="checkbox" name="toggle" value="on">
+`;
+
+
 document.addEventListener('DOMContentLoaded', () => {
-  const questionsContainer = document.querySelector('.questions');
-  const postId = window.location.pathname.substr(1); // Extract postId from the URL
-  const topQuestionPanel = document.querySelector('.topQuestionPanel');
-  const repliesContainer = document.querySelector('.replies');
-  const commentBox = document.querySelector('.comment-box');
-  const rightPanel = document.querySelector('.right-panel');
-  const leftPanel = document.querySelector('.left-panel');
+
+    showQuestionsInLeftPanel();
+    rightPanelTopBar();
+    rightPanelGetReplies();
+    searchInputListener();
+
+
+    inputSearch.addEventListener('focus', () => {
+        header.classList.add('focus');
+    });
+
+    faArrowLeft.addEventListener('click', () => {
+        header.classList.remove('focus');
+        searchBar.style.display = 'flex';
+        showQuestionsInLeftPanel();
+    });
+
+    faBars.addEventListener('click', ()=>{
+        header.classList.add('focus');
+        searchBar.style.display = 'None';
+        navToolBar();
+    });
+
+    deviceAdjust();
+});
+
+function deviceAdjust(){
+  const md = new MobileDetect(window.navigator.userAgent);
+  const allElements = document.querySelectorAll('.header');
+
+  if (!md.mobile()) {
+    disableMobileStylesheet();
+  }
+  else{
+    allElements.forEach(element => {
+      element.style.fontSize = '20px';
+    });
+  }
+}
+
+function disableMobileStylesheet() {
+  var links = document.head.getElementsByTagName('link');
+  for (var i = 0; i < links.length; i++) {
+    if (links[i].href.includes('mobile-version.css')) {
+      links[i].parentNode.removeChild(links[i]);
+      break;
+    }
+  }
+}
+
+
+
+function sendTo(url) {
+  window.location.href = url;
+}
+
+
+function login(){
+  questionsContainer.innerHTML = `
+        <section class="forms-section">
+        <div class="forms">
+          <div class="form-wrapper is-active">
+            <button type="button" class="switcher switcher-login">
+              Login
+              <span class="underline"></span>
+            </button>
+            <form class="form btn form-login">
+              <fieldset>
+                <legend>Please, enter your email and password for login.</legend>
+                <div class="input-block">
+                  <label for="username">Username</label>
+                  <input id="input-username" class="input-username" type="text" required>
+                </div>
+                <div class="input-block">
+                  <label for="login-password">Password</label>
+                  <input id="login-password" type="password" class="input-password" required>
+                </div>
+              </fieldset>
+              <button id="loginButton" class="btn-login" type="loginButton" onclick="event.preventDefault()">Login</button>
+            </form>
+          </div>
+          <div class="form-wrapper">
+            <button type="button" class="switcher switcher-signup">
+              Sign Up
+              <span class="underline"></span>
+            </button>
+            <form class="form btn form-signup">
+              <fieldset>
+                <legend>Please, enter your email, password and password confirmation for sign up.</legend>
+                <div class="input-block">
+                  <label for="username">Username</label>
+                  <input id="signup-email" type="text" class="input-username" required>
+                </div>
+                <div class="input-block">
+                  <label for="signup-password">Password</label>
+                  <input id="signup-password" type="password" class="input-password" required>
+                </div>
+                <div class="input-block">
+                  <label for="signup-password-confirm">Confirm password</label>
+                  <input id="signup-password-confirm" type="password" required>
+                </div>
+              </fieldset>
+              <button id="registerButton" type="loginButton" class="btn-signup" onclick="event.preventDefault()">Register</button>
+            </form>
+          </div>
+        </div>
+      </section>
+  `;
+
+
+    const switchers = questionsContainer.querySelectorAll('.switcher');
+
+    switchers.forEach(item => {
+        item.addEventListener('click', function() {
+            switchers.forEach(item => item.parentElement.classList.remove('is-active'))
+            this.parentElement.classList.add('is-active')
+        })
+    });
+
+
+
+
+
+  // questionsContainer.innerHTML = `
+  //     <input type="text" placeholder="Username" class="text input-text input-username btn">
+  //     <input type="password" placeholder="Type Password Here..." class="text btn input-password input-text">
+  //     <button class="text post btn text" id="loginButton">Login</button>
+  // `;
+document.getElementById('loginButton').addEventListener('click', authentication);
+document.getElementById('registerButton').addEventListener('click', register);
+
+}
+
+async function register(){
+  const username = document.getElementById('signup-email').value;
+  const password = document.getElementById('signup-password').value;
+  const errorDiv= document.querySelector('.error');
+  const signupData = { username, password };
+
+  // Send a POST request to the /login route
+  const response = await fetch('/signup', {
+          method: 'POST',
+          headers: {
+          'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(signupData)
+  });
+
+  const result = await response.json();
+
+  if (response.ok) {
+      document.querySelector('.switcher-login').click();
+      document.getElementById('input-username').value = username;
+      document.getElementById('login-password').value = password;
+      document.getElementById('loginButton').click();
+  } else if (result.error) {
+      // Display the error message in the .error element
+      if (result.error.includes('Duplicate entry'))errorDiv.textContent = `Username with '${username}' already exists. Choose another one!`;
+      else errorDiv.textContent = result.error;
+    }
+}
+// Existing code ...
+
+// Define a function to handle login
+function authentication() {
+  const username = document.getElementById('input-username').value;
+  const password = document.getElementById('login-password').value;
+  // Send login data to the server for authentication
+  fetch('/login', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ username, password })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.message === 'Login successful') {
+      localStorage.setItem('authToken', data.token);
+      searchBar.style.display = 'flex';
+      header.classList.remove('focus');
+      navToolBar();
+    } else {
+      alert('Login failed. Please check your credentials.');
+    }
+  })
+  .catch(error => {
+    console.error('Login error:', error);
+  });
+}
+
+
+function logout(){
+  localStorage.removeItem('authToken');
+  searchBar.style.display = 'flex';
+  header.classList.remove('focus');
   showQuestionsInLeftPanel();
-  // fetch('/getQuestions')
-  //   .then(response => response.json())
-  //   .then(posts => {
-  //     posts.forEach(post => {
-  //       const postDiv = document.createElement('div');
-  //       postDiv.innerHTML = `
-  //         <div class="one_quesion">
-  //           <button class="btn user-id">
-  //             ${post.user_id}
-  //             <div class="post-created">${post.post_created}</div>
-  //           </button>
-  //             <button class="btn post">
-  //               <a class="fake-link" href="/${post.post_id}">
-  //                 <div class="post">${post.post}</div>
-  //               </a>
-  //             </button>
-  //         </div>
-  //       `;
-  //       questionsContainer.appendChild(postDiv);
-  //     });
-  //   })
-  //   .catch(error => {
-  //     console.error('Error fetching posts:', error);
-  //   });
+}
 
 
+function rightPanelTopBar(){
   fetch('/getPost='+postId)
     .then(response => response.json())
     .then(posts => {
@@ -41,29 +253,30 @@ document.addEventListener('DOMContentLoaded', () => {
         if (rootPost === null)rootPost = ' ';
         topQuestionPanel.innerHTML = `
           <button onclick="sendTo('/${rootPost}')">
-            <i class="fas fa-arrow-left"></i> <!-- Font Awesome left arrow icon -->
+            <i class="text fas fa-arrow-left"></i> <!-- Font Awesome left arrow icon -->
           </button>
-          <div class="selected_question btn post">
-                <a class="fake-link-long" href="/${post.post_id}">
-                  <div class="post">${post.post}</div>
+          <div class="text selected_question btn post">
+                <a class="text fake-link-long" href="/${post.post_id}">
+                  <div class="text post">${post.post}</div>
                 </a>
-              <button class="btn user-id-short">
+              <button class="text btn user-id-short">
                 ${post.user_id}
-                <div class="post-created">${post.post_created}</div>
+                <div class="text post-created">${post.post_created}</div>
               </button>
-                  <button class="upvote-btn small-btn btn" onclick="handleVote(${post.post_id}, 'upvote', this.nextElementSibling)"><i class="fas fa-chevron-up"></i></button>
-                  <button class="vote_count small-btn btn"></button> <!-- Corrected this line -->
-                  <button class="downvote-btn small-btn btn" onclick="handleVote(${post.post_id}, 'downvote', this.previousElementSibling)"><i class="fas fa-chevron-down"></i></button>
-                  <div class="replies-info"></div>
+                  <button class="text upvote-btn small-btn btn" onclick="handleVote(${post.post_id}, 1, this.nextElementSibling)"><i class="text fas fa-chevron-up"></i></button>
+                  <button class="text vote_count small-btn btn"></button> <!-- Corrected this line -->
+                  <button class="text downvote-btn small-btn btn" onclick="handleVote(${post.post_id}, -1, this.previousElementSibling)"><i class="text fas fa-chevron-down"></i></button>
+
+                  <div class="text replies-info"></div>
             </div>
 
           </div>
         `;
         updateVoteText(topQuestionPanel.querySelector('.vote_count'), topQuestionPanel.querySelector('.replies-info'), post.post_id);
         commentBox.innerHTML = `
-            <textarea class="comment-input" placeholder="Add a comment..."></textarea>
-            <button class="comment-submit-btn">
-              <i class="fas fa-paper-plane"></i> <!-- Font Awesome paper plane icon -->
+            <textarea class="text comment-input" placeholder="Add a comment..."></textarea>
+            <button class="text comment-submit-btn">
+              <i class="text fas fa-paper-plane"></i> <!-- Font Awesome paper plane icon -->
             </button>
           `;
       });
@@ -76,27 +289,27 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Error fetching posts:', error);
     });
 
+}
 
-
-
-    fetch('/getReplies='+postId)
+function rightPanelGetReplies(){
+      fetch('/getReplies='+postId)
     .then(response => response.json())
     .then(replies => {
         replies.forEach(reply => {
           const replyDiv = document.createElement('div');
           replyDiv.innerHTML = `
-            <div class="reply-section">
-              <a href="/${reply.post_id}" class="fake-link comments">
-                <div class="sender">${reply.user_id} → ${reply.formatted_time}</div>
-                <div class="clickOnReplies">${reply.post}</div>
-                <div class="divider"></div> <!-- Dividing line -->
-                <div class="replies-info"></div>
+            <div class="text reply-section">
+              <a href="/${reply.post_id}" class="text fake-link comments">
+                <div class="text sender">${reply.user_id} → ${reply.formatted_time}</div>
+                <div class="text clickOnReplies">${reply.post}</div>
+                <div class="text divider"></div> <!-- Dividing line -->
+                <div class="text replies-info"></div>
               </a>
-              <div class="vote-section">
-                <div class="vote-buttons">
-                  <button class="upvote-btn small-btn btn" onclick="handleVote(${reply.post_id}, 'upvote', this.nextElementSibling)"><i class="fas fa-chevron-up"></i></button>
-                  <button class="vote_count small-btn btn"></button> <!-- Corrected this line -->
-                  <button class="downvote-btn small-btn btn" onclick="handleVote(${reply.post_id}, 'downvote', this.previousElementSibling)"><i class="fas fa-chevron-down"></i></button>
+              <div class="text vote-section">
+                <div class="text vote-buttons">
+                  <button class="text upvote-btn small-btn btn postSequenceU${reply.post_id}" onclick="handleVote(${reply.post_id}, 1, this.nextElementSibling)"><i class="text fas fa-chevron-up"></i></button>
+                  <button class="text vote_count small-btn btn"></button> <!-- Corrected this line -->
+                  <button class="text downvote-btn small-btn btn postSequenceD${reply.post_id}" onclick="handleVote(${reply.post_id}, -1, this.previousElementSibling)"><i class="text fas fa-chevron-down"></i></button>
                 </div>
               </div>
             </div>
@@ -105,35 +318,45 @@ document.addEventListener('DOMContentLoaded', () => {
           updateVoteText(replyDiv.querySelector('.vote_count'), replyDiv.querySelector('.replies-info'), reply.post_id);
           repliesContainer.appendChild(replyDiv);
 
-        })
+        });
+        colorReactedPost(repliesContainer);
     })
     .catch(error => {
       console.error('Error fetching replies:', error);
     });
 
 
+}
 
-
-
-
-    const header = document.querySelector('.header');
-    const inputSearch = document.querySelector('.search-box-click');
-    const faArrowLeft = document.querySelector('.fa-arrow-left');
-    // files = document.querySelector('#files'),
-    // chatBox = document.querySelector('#chatBox'),
-    // msg = document.querySelector('#Msg');
-
-    inputSearch.addEventListener('focus', () => {
-        header.classList.add('focus');
+function colorReactedPost(repliesContainer) {
+  fetch('/getPostWhereCurrentUserReactionExists', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: localStorage.getItem('authToken')
+    }
+  })
+    .then(response => response.json())
+    .then(result => {
+      result.forEach(post => {
+        console.log(post.vote, post.post_id, '.postSequenceU'+post.post_id);
+        try{
+          if(post.vote===1)repliesContainer.querySelector('.postSequenceU'+post.post_id).classList.add('selected_post');
+          else repliesContainer.querySelector('.postSequenceD'+post.post_id).classList.add('selected_post');
+          console.log(post.post_id+' '+post.vote);
+        }catch(error){
+          console.log(error+' ashlo na '+post.post_id);
+        }
+      })
+    })
+    .catch(error => {
+      console.log('hoilo na');
+      // Error handling
     });
+}
 
-    faArrowLeft.addEventListener('click', () => {
-        header.classList.remove('focus');
-        showQuestionsInLeftPanel();
-    });
-
-
-    inputSearch.addEventListener('keyup', (event) => {
+function searchInputListener(){
+      inputSearch.addEventListener('keyup', (event) => {
         const searchQuery = inputSearch.value;
         fetch('/getResults?q='+searchQuery)
           .then(response => response.json())
@@ -142,14 +365,14 @@ document.addEventListener('DOMContentLoaded', () => {
             posts.forEach(post => {
               const postDiv = document.createElement('div');
               postDiv.innerHTML = `
-                <div class="one_quesion">
-                  <button class="btn user-id">
+                <div class="text one_quesion">
+                  <button class="text btn user-id">
                     ${post.user_id}
-                    <div class="post-created">${post.post_created}</div>
+                    <div class="text post-created">${post.post_created}</div>
                   </button>
-                    <button class="btn post">
-                      <a class="fake-link" href="/${post.post_id}">
-                        <div class="post">${post.post}</div>
+                    <button class="text btn post">
+                      <a class="text fake-link" href="/${post.post_id}">
+                        <div class="text post">${post.post}</div>
                       </a>
                     </button>
                 </div>
@@ -163,16 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
           });
       // }
     });
-
-
-
-});
-
-
-function sendTo(url) {
-  window.location.href = url;
 }
-
 
 
 function showComments(postId, postText) {
@@ -184,13 +398,6 @@ function showComments(postId, postText) {
 
 
 function showQuestionsInLeftPanel(){
-  const questionsContainer = document.querySelector('.questions');
-  const postId = window.location.pathname.substr(1); // Extract postId from the URL
-  const topQuestionPanel = document.querySelector('.topQuestionPanel');
-  const repliesContainer = document.querySelector('.replies');
-  const commentBox = document.querySelector('.comment-box');
-  const rightPanel = document.querySelector('.right-panel');
-  const leftPanel = document.querySelector('.left-panel');
   fetch('/getQuestions')
     .then(response => response.json())
     .then(posts => {
@@ -198,14 +405,14 @@ function showQuestionsInLeftPanel(){
       posts.forEach(post => {
         const postDiv = document.createElement('div');
         postDiv.innerHTML = `
-          <div class="one_quesion">
-            <button class="btn user-id">
+          <div class="text one_quesion">
+            <button class="text btn user-id">
               ${post.user_id}
-              <div class="post-created">${post.post_created}</div>
+              <div class="text post-created">${post.post_created}</div>
             </button>
-              <button class="btn post">
-                <a class="fake-link" href="/${post.post_id}">
-                  <div class="post">${post.post}</div>
+              <button class="text btn post">
+                <a class="text fake-link" href="/${post.post_id}">
+                  <div class="text post">${post.post}</div>
                 </a>
               </button>
           </div>
@@ -221,25 +428,6 @@ function showQuestionsInLeftPanel(){
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-const dragbar = document.querySelector('.drag-bar');
-const left = document.querySelector('.left-panel');
-const right= document.querySelector('.right-panel');
-let flag = false;
-let initialOffsetX = 0;
-const screenWidth = window.innerWidth;
-let newLeftWidth = left.style.width;
 
 
 
@@ -299,18 +487,155 @@ function updateVoteText(vote_text, comment_number, postId){
 
 
 function handleVote(postId, voteType, vote_text) {
-  console.log('function e ashse');
-  fetch(`/vote?postId=${postId}&voteType=${voteType}`)
-    .then(response => response.json()) // Fix the typo here
-    .then(data => {
-      if (data.voteCount !== undefined)
-        vote_text.textContent = data.voteCount;
-      })
+    fetch('/setReaction', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: localStorage.getItem('authToken')
+    },
+    body: JSON.stringify({ postId, voteType })
+  })
+    .then(response => response.json())
+    .then(result => {
+        console.log(result);
+        vote_text.textContent = result.voteCount;
+        try{
+          vote_text.previousElementSibling.classList.remove('selected_post');
+          vote_text.nextElementSibling.classList.remove('selected_post');
+          if(result.userReaction === 1) vote_text.previousElementSibling.classList.add('selected_post');
+          else if(result.userReaction === -1) vote_text.nextElementSibling.classList.add('selected_post');
+        }catch(error){console.log('error: '+postId)}
+    })
     .catch(error => {
-      console.error('Error fetching replies:', error);
+      console.log('hoilo na');
+      // Error handling
     });
 }
 
 
+async function getUsername(){
+    const response = await fetch('/getUsername', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: localStorage.getItem('authToken')
+    }
+  });
+
+  const result = await response.json();
+
+  if (response.ok) {
+    const username = result.user_id;
+    console.log(username);
+    return username;
+  }
+  return "";
+}
+
+async function navToolBar(){
+  leftPanel.style.width = window.innerWidth/3 + 'px';
+  const username = await getUsername();
+  questionsContainer.innerHTML=`
+
+    <div class="pristineTop">
+    <div class="pristine2">
+        <input class="pristine" type="checkbox" name="toggle" onclick=toggleAnonymous() value="on">
+      </div>
+
+      <div class="patterns">
+        <svg width="100%" height="100%">
+          <defs>
+            <pattern id="polka-dots" x="0" y="0" width="100" height="100"
+                    patternUnits="userSpaceOnUse">
+              <circle fill="#be9ddf" cx="25" cy="25" r="3"></circle>
+            </pattern>
+              <style>
+                @import url("https://fonts.googleapis.com/css?family=Lora:400,400i,700,700i");
+              </style>
+          </defs>
+          <rect x="0" y="0" width="100%" height="100%" fill="url(#polka-dots)"> </rect>
+      <text x="50%" y="60%"  text-anchor="middle"  >
+        ${username}
+      </text>
+      </svg>
+      </div>
 
 
+    </div>
+
+    <div class="bounce bounce-login" onclick=login()>
+      <span class="letter">L</span>
+      <span class="letter">O</span>
+      <span class="letter">G</span>
+      <span class="letter">I</span>
+      <span class="letter">N</span>
+    </div>
+
+
+    <div class="bounce bounce-logout" onclick=logout()>
+      <span class="letter">L</span>
+      <span class="letter">O</span>
+      <span class="letter">G</span>
+      <span class="letter">O</span>
+      <span class="letter">U</span>
+      <span class="letter">T</span>
+    </div>
+  `;
+
+  if(username==='')questionsContainer.querySelector('.bounce-logout').style.display='None';
+  else{
+    questionsContainer.querySelector('.bounce-login').style.display = 'none';
+    const checkbox = questionsContainer.querySelector('input[type="checkbox"]');
+    if (username === 'Anonymous') {
+      checkbox.classList.add('checkbox-not-toggled');
+    } else {
+      checkbox.classList.add('checkbox-toggled');  // Checked
+    }
+  }
+
+
+  questionsContainer.appendChild(msgPortal);
+  // questionsContainer.appendChild(anonymousButton);
+
+  leftPanel.style.width = window.innerWidth/2+'px';
+}
+
+
+
+function toggleAnonymous() {
+    fetch('/toggleAnonymous', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: localStorage.getItem('authToken')
+    }
+  })
+    .then(response => response.json())
+    .then(result => {
+        navToolBar();
+    })
+    .catch(error => {
+      console.log('hoilo na');
+    });
+}
+
+const checkbox = document.querySelector('input[type="checkbox"]');
+
+checkbox.addEventListener('change', () => {
+  if (checkbox.checked) {
+    checkbox.classList.add('checkbox-toggled');
+  } else {
+    checkbox.classList.remove('checkbox-toggled');
+  }
+});
+
+
+
+const switchers = document.querySelectorAll('.switcher');
+
+switchers.forEach(item => {
+	item.addEventListener('click', function() {
+		switchers.forEach(item => item.parentElement.classList.remove('is-active'))
+		this.parentElement.classList.add('is-active')
+	})
+});
