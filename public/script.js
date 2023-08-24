@@ -19,23 +19,7 @@ const screenWidth = window.innerWidth;
 let newLeftWidth = left.style.width;
 let msgPortal = document.createElement('div');
 msgPortal.innerHTML = `
-    <div class="letter-image">
-    <div class="animated-mail">
-      <div class="back-fold"></div>
-      <div class="letter">
-        <div class="letter-border"></div>
-        <div class="letter-title"></div>
-        <div class="letter-context"></div>
-        <div class="letter-stamp">
-          <div class="letter-stamp-inner"></div>
-        </div>
-      </div>
-      <div class="top-fold"></div>
-      <div class="body"></div>
-      <div class="left-fold"></div>
-    </div>
-    <div class="shadow"></div>
-    <div>
+
 `;
 let anonymousButton = document.createElement('div');
 anonymousButton.innerHTML = `
@@ -274,11 +258,16 @@ function rightPanelTopBar(){
         `;
         updateVoteText(topQuestionPanel.querySelector('.vote_count'), topQuestionPanel.querySelector('.replies-info'), post.post_id);
         commentBox.innerHTML = `
-            <textarea class="text comment-input" placeholder="Add a comment..."></textarea>
+            <span class="spacious">
+              <textarea type="text" class="nobg"></textarea>
+            </span>
             <button class="text comment-submit-btn">
               <i class="text fas fa-paper-plane"></i> <!-- Font Awesome paper plane icon -->
             </button>
           `;
+        commentBox.querySelector('.comment-submit-btn').addEventListener('click', function(){
+          newPostSubmit(postId, commentBox.querySelector('.nobg').value);
+        });
       });
     })
     .catch(error => {
@@ -300,7 +289,7 @@ function rightPanelGetReplies(){
           replyDiv.innerHTML = `
             <div class="text reply-section">
               <a href="/${reply.post_id}" class="text fake-link comments">
-                <div class="text sender">${reply.user_id} → ${reply.formatted_time}</div>
+                <div class="text sender">${reply.user_id} → ${reply.post_created}</div>
                 <div class="text clickOnReplies">${reply.post}</div>
                 <div class="text divider"></div> <!-- Dividing line -->
                 <div class="text replies-info"></div>
@@ -497,7 +486,7 @@ function handleVote(postId, voteType, vote_text) {
   })
     .then(response => response.json())
     .then(result => {
-        console.log(result);
+        if(result.error)throw new Error(result.error);
         vote_text.textContent = result.voteCount;
         try{
           vote_text.previousElementSibling.classList.remove('selected_post');
@@ -507,7 +496,8 @@ function handleVote(postId, voteType, vote_text) {
         }catch(error){console.log('error: '+postId)}
     })
     .catch(error => {
-      console.log('hoilo na');
+      console.log('hoilo na '+error);
+      login();
       // Error handling
     });
 }
@@ -536,73 +526,106 @@ async function navToolBar(){
   leftPanel.style.width = window.innerWidth/3 + 'px';
   const username = await getUsername();
   questionsContainer.innerHTML=`
+    <div class="navToolBarAll">
+      <div class="pristineTop">
+        <div class="pristine2">
+          <input class="pristine" type="checkbox" name="toggle" onclick=toggleAnonymous() value="on">
+        </div>
 
-    <div class="pristineTop">
-    <div class="pristine2">
-        <input class="pristine" type="checkbox" name="toggle" onclick=toggleAnonymous() value="on">
+        <div class="patterns">
+          <svg width="100%" height="100%">
+            <defs>
+              <pattern id="polka-dots" x="0" y="0" width="100" height="100"
+                      patternUnits="userSpaceOnUse">
+                <circle fill="#be9ddf" cx="25" cy="25" r="3"></circle>
+              </pattern>
+                <style>
+                  @import url("https://fonts.googleapis.com/css?family=Lora:400,400i,700,700i");
+                </style>
+            </defs>
+            <rect x="0" y="0" width="100%" height="100%" fill="url(#polka-dots)"> </rect>
+        <text x="50%" y="60%"  text-anchor="middle"  >
+          ${username}
+        </text>
+        </svg>
+        </div>
+
+
       </div>
 
-      <div class="patterns">
-        <svg width="100%" height="100%">
-          <defs>
-            <pattern id="polka-dots" x="0" y="0" width="100" height="100"
-                    patternUnits="userSpaceOnUse">
-              <circle fill="#be9ddf" cx="25" cy="25" r="3"></circle>
-            </pattern>
-              <style>
-                @import url("https://fonts.googleapis.com/css?family=Lora:400,400i,700,700i");
-              </style>
-          </defs>
-          <rect x="0" y="0" width="100%" height="100%" fill="url(#polka-dots)"> </rect>
-      <text x="50%" y="60%"  text-anchor="middle"  >
-        ${username}
-      </text>
-      </svg>
+      <div class="bounce bounce-login" onclick=login()>
+        <span class="letter">L</span>
+        <span class="letter">O</span>
+        <span class="letter">G</span>
+        <span class="letter">I</span>
+        <span class="letter">N</span>
       </div>
 
 
-    </div>
-
-    <div class="bounce bounce-login" onclick=login()>
-      <span class="letter">L</span>
-      <span class="letter">O</span>
-      <span class="letter">G</span>
-      <span class="letter">I</span>
-      <span class="letter">N</span>
-    </div>
-
-
-    <div class="bounce bounce-logout" onclick=logout()>
-      <span class="letter">L</span>
-      <span class="letter">O</span>
-      <span class="letter">G</span>
-      <span class="letter">O</span>
-      <span class="letter">U</span>
-      <span class="letter">T</span>
-    </div>
+      <div class="bounce bounce-logout" onclick=logout()>
+        <span class="letter">L</span>
+        <span class="letter">O</span>
+        <span class="letter">G</span>
+        <span class="letter">O</span>
+        <span class="letter">U</span>
+        <span class="letter">T</span>
+      </div>
 
 
+        <div class="letter-image">
+          <div class="animated-mail">
+            <div class="back-fold"></div>
+            <div class="letter">
+              <div class="letter-border"></div>
+              <div class="letter-title"></div>
+              <div class="letter-context"></div>
+              <div class="letter-stamp">
+                <div class="letter-stamp-inner"></div>
+              </div>
+            </div>
+            <div class="top-fold"></div>
+            <div class="body"></div>
+            <div class="left-fold"></div>
+          </div>
+          <div class="shadow"></div>
+        </div>
 
-    <div class="main">
-        <span>P</span>
-        <span class="spacious">
-          <textarea type="text" class="nobg"></textarea>
-        </span>
-        <span>S</span>
-        <span>T</span>
-        <span>
-          <button class="text comment-submit-btn">
-              <i class="text fas fa-paper-plane new-post-submit"></i> <!-- Font Awesome paper plane icon -->
-            </button>
+
+
+      <div class="main newPostArea">
+          <span>P</span>
+          <span class="spacious">
+            <textarea type="text" class="nobg"></textarea>
           </span>
+          <span>S</span>
+          <span>T</span>
+          <span>
+            <button class="text comment-submit-btn">
+                <i class="text fas fa-paper-plane new-post-submit"></i> <!-- Font Awesome paper plane icon -->
+              </button>
+            </span>
+      </div>
     </div>
   `;
   const checkbox = questionsContainer.querySelector('input[type="checkbox"]');
+  const postTextBox = questionsContainer.querySelector('.new-post-submit');
+  checkbox.addEventListener('change', () => {
+    if (checkbox.checked) {
+      checkbox.classList.add('checkbox-toggled');
+    } else {
+      checkbox.classList.remove('checkbox-toggled');
+    }
+  });
   if(username===''){
     questionsContainer.querySelector('.bounce-logout').style.display='None';
     checkbox.style.display = 'None';
+    questionsContainer.querySelector('.newPostArea').style.display = 'None';
   }
   else{
+
+    postTextBox.addEventListener('click', function(){
+      newPostSubmit(null, questionsContainer.querySelector('.nobg').value);
+    });
     questionsContainer.querySelector('.bounce-login').style.display = 'none';
 
     if (username === 'Anonymous') {
@@ -612,9 +635,6 @@ async function navToolBar(){
     }
   }
 
-  questionsContainer.querySelector('.new-post-submit').addEventListener('click', function(){
-    newPostSubmit(questionsContainer.querySelector('.nobg').textContent);
-  });
 
 
   questionsContainer.appendChild(msgPortal);
@@ -625,8 +645,8 @@ async function navToolBar(){
 
 
 
-function newPostSubmit(txt){
-    const root_post = null;
+function newPostSubmit(root_post, txt){
+    console.log(txt);
     fetch('/postSubmit', {
     method: 'POST',
     headers: {
@@ -637,17 +657,14 @@ function newPostSubmit(txt){
   })
     .then(response => response.json())
     .then(result => {
-        console.log(result);
-        vote_text.textContent = result.voteCount;
-        try{
-          vote_text.previousElementSibling.classList.remove('selected_post');
-          vote_text.nextElementSibling.classList.remove('selected_post');
-          if(result.userReaction === 1) vote_text.previousElementSibling.classList.add('selected_post');
-          else if(result.userReaction === -1) vote_text.nextElementSibling.classList.add('selected_post');
-        }catch(error){console.log('error: '+postId)}
+        if (!result.postId)throw new Error(result.error);
+        if(root_post)
+        window.location.href='/'+root_post;
+        else window.location.href = '/'+result.postId;
     })
     .catch(error => {
-      console.log('hoilo na');
+      login();
+      console.log('hoilo na kono karone');
       // Error handling
     });
 }
@@ -671,15 +688,7 @@ function toggleAnonymous() {
     });
 }
 
-const checkbox = document.querySelector('input[type="checkbox"]');
 
-checkbox.addEventListener('change', () => {
-  if (checkbox.checked) {
-    checkbox.classList.add('checkbox-toggled');
-  } else {
-    checkbox.classList.remove('checkbox-toggled');
-  }
-});
 
 
 

@@ -194,7 +194,7 @@ reply{
 }
 
 .comment-box {
-  background-color: #1e1e1e;
+  background: none;
   padding: 10px;
   position: relative;
   border-top: 1px solid #333;
@@ -279,6 +279,7 @@ reply{
   border-left: 10px solid transparent;
   border-right: 10px solid transparent;
   border-bottom: 10px solid #1e1e1e;
+  background: none;
 }
 
 .fa-arrow-left{

@@ -54,7 +54,7 @@ const authenticateUser = (req, res, next) => {
 
   jwt.verify(token, jwtSecretKey, (err, decoded) => {
     if (err) {
-      return res.status(403).json({ message: 'Failed to authenticate token' });
+      return res.status(500).json({ error: 'Failed to authenticate token' });
     }
 
     req.user = decoded;
@@ -68,7 +68,7 @@ app.post('/getUsername', authenticateUser, (req, res) => {
   const username = req.user.username;
   db.query(`select role from users where user_id=?`, username, (err, results)=>{
     if(err)return res.status(500).json({error: 'kisu ekta error hoise'});
-    if(results[0].role)return res.status(200).json({user_id: username});
+    if(!results[0].role)return res.status(200).json({user_id: username});
     return res.status(200).json({user_id: 'Anonymous'});
   });
 
@@ -77,10 +77,41 @@ app.post('/getUsername', authenticateUser, (req, res) => {
 
 app.post('/postSubmit', authenticateUser, (req, res) => {
   const username = req.user.username;
-  db.query(`insert role from users where user_id=?`, username, (err, results)=>{
+  const text = req.body.txt;
+  const root_post = req.body.root_post;
+  const query1 = `select role from users where user_id='${username}'`;
+  const query2 = `
+  WITH RECURSIVE NumberSequence AS (
+    SELECT 1 AS num
+    UNION ALL
+    SELECT num + 1
+    FROM NumberSequence
+  )
+  SELECT num AS first_missing_post_id
+  FROM NumberSequence
+  WHERE NOT EXISTS (
+    SELECT 1
+    FROM posts
+    WHERE post_id = NumberSequence.num
+  )
+  LIMIT 1;
+  `;
+  db.query(query1, (err, results)=>{
     if(err)return res.status(500).json({error: 'kisu ekta error hoise'});
-    if(results[0].role)return res.status(200).json({user_id: username});
-    return res.status(200).json({user_id: 'Anonymous'});
+    let anonymous = 0;
+    if (results[0].role==='anonymous')anonymous = 1;
+    db.query(query2, (err, results)=>{
+      if(err)return res.status(500).json({error: 'query2 te ashe nai'});
+      const postId = results[0].first_missing_post_id;
+      console.log('query2 hoise '+postId);
+      const query3 = `insert into posts(root_post, user_id, post_id, anonymous, post) values(${root_post},'${username}', ${postId}, ${anonymous}, ?)`;
+
+        console.log(query3);
+      db.query(query3, text, (err, results)=>{
+        if(err)if(err)return res.status(500).json({error: 'query3 te ashe nai'});
+        return res.status(200).json({postId: postId});
+      })
+    })
   });
 
 });
@@ -107,7 +138,13 @@ app.post('/toggleAnonymous', authenticateUser, (req, res)=>{
 
 //getQuesions function
 app.get('/getQuestions', (req, res) => {
-  db.query('SELECT * FROM posts where root_post is NULL', (err, results) => {
+  const query = `
+  SELECT post_id, post, root_post, DATE_FORMAT(post_created, '%h:%i:%s%p, %d %b %Y') as post_created,
+       CASE WHEN anonymous = 1 THEN 'Anonymous' ELSE user_id END AS user_id
+  FROM posts
+  WHERE root_post is null;
+  `;
+  db.query(query, (err, results) => {
     if (err) {
       console.error('Error fetching posts:', err);
       return res.status(500).json({ error: 'Error fetching posts' });
@@ -131,7 +168,10 @@ app.get('/getResults', (req, res) => {
   const queryParams = searchWords.map(word => `%${word}%`);
 
   // Use the WHERE clause and placeholders in the query
-  const query = `SELECT unique *, ${whereClause} AS match_count FROM posts WHERE ${whereClause} ORDER BY match_count DESC`;
+  const query = `SELECT unique
+  post_id, post, root_post, DATE_FORMAT(post_created, '%h:%i:%s%p, %d %b %Y') as post_created,
+       CASE WHEN anonymous = 1 THEN 'Anonymous' ELSE user_id END AS user_id,
+        ${whereClause} AS match_count FROM posts WHERE ${whereClause} ORDER BY match_count DESC`;
 
   db.query(query, (err, results) => {
     if (err) {
@@ -145,7 +185,15 @@ app.get('/getResults', (req, res) => {
 
 app.get('/getReplies=:postId', (req, res) => {
   const postId = req.params.postId;
-  db.query(`SELECT *, DATE_FORMAT(post_created, '%h:%i:%s%p, %d %b %Y') AS formatted_time FROM posts WHERE root_post=${postId} ORDER BY post_created DESC`, (err, results) => {
+  const query = `
+  SELECT post_id, post, root_post, DATE_FORMAT(post_created, '%h:%i:%s%p, %d %b %Y') as post_created,
+        CASE WHEN anonymous = 1 THEN 'Anonymous' ELSE user_id END AS user_id,
+        (select coalesce(sum(reactions.vote),0) from reactions where posts.post_id=reactions.post_id) as votes
+  FROM posts
+  WHERE root_post=${postId}
+  ORDER BY votes desc, post_created DESC;
+  `;
+  db.query(query, (err, results) => {
     if(err){
       return res.status(500).json({error: 'Error fetching posts'});
 
@@ -153,13 +201,18 @@ app.get('/getReplies=:postId', (req, res) => {
     return res.status(200).json(results);
   });
 });
-
 app.get('/getPost=:postId', (req, res) => {
   const postId = req.params.postId;
-  db.query('select * from posts where post_id='+postId, (err, results) => {
+  const query = `
+  SELECT post_id, post, root_post, DATE_FORMAT(post_created, '%h:%i:%s%p, %d %b %Y') as post_created,
+       CASE WHEN anonymous = 1 THEN 'Anonymous' ELSE user_id END AS user_id
+  FROM posts
+  WHERE post_id = ${postId};
+  `;
+  console.log(query);
+  db.query(query, (err, results) => {
     if(err){
       return res.status(500).json({error: 'Error fetching posts'});
-
     }
     return res.status(200).json(results);
   });

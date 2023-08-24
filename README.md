@@ -5,12 +5,28 @@ Mental Care related platform similar to stackOverflow...
 ## Prerequisites
 
 - Node.js
-- MariaDB
+- MySQL
+- Express
+- Bcrypt
+- JWT
 
 ## Database Tables
 
-### Table: posts
+### Table: users
 
+```mysql
+CREATE TABLE users (
+  user_id VARCHAR(255) NOT NULL PRIMARY KEY,
+  password VARCHAR(255) NOT NULL,
+  role VARCHAR(255)
+);
+```
+
+| Field    | Type         | Null | Key | Default | Extra |
+|----------|--------------|------|-----|---------|-------|
+| user_id  | varchar(255) | NO   | PRI | NULL    |       |
+| password | varchar(255) | NO   |     | NULL    |       |
+| role     | varchar(255) | YES  |     | NULL    |       |
 
 
 ```mysql
@@ -43,24 +59,6 @@ END;
 DELIMITER ;
 ```
 
-| Field        | Type         | Null | Key | Default             | Extra          |
-|--------------|--------------|------|-----|---------------------|----------------|
-| post_id      | int(11)      | NO   | PRI | NULL                | auto_increment |
-| user_id      | varchar(255) | YES  | MUL | NULL                |                |
-| post         | text         | NO   |     | NULL                |                |
-| post_created | datetime     | YES  |     | current_timestamp() |                |
-| anonymous    | tinyint(1)   | YES  |     | 0                   |                |
-| vote         | int(11)      | YES  |     | 0                   |                |
-| root_post    | int(11)      | YES  | MUL | NULL                |                |
-
-### Table: users
-
-| Field    | Type         | Null | Key | Default | Extra |
-|----------|--------------|------|-----|---------|-------|
-| user_id  | varchar(255) | NO   | PRI | NULL    |       |
-| password | varchar(255) | NO   |     | NULL    |       |
-| role     | varchar(255) | YES  |     | NULL    |       |
-
 ```mysql
 DELIMITER //
 CREATE PROCEDURE insert_user(IN p_user_id VARCHAR(255), IN p_password VARCHAR(255))
@@ -85,13 +83,36 @@ DELIMITER ;
 ```
 
 
-## Table: Reactions
 
-| Field   | Type         | Null | Key | Default | Extra |
-|---------|--------------|------|-----|---------|-------|
-| user_id | varchar(255) | NO   | PRI | NULL    |       |
-| post_id | int(11)      | NO   | PRI | NULL    |       |
-| vote    | int(11)      | NO   |     | 0       |       |
+### Table: posts
+
+```mysql
+CREATE TABLE posts (
+  post_id INT(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
+  user_id VARCHAR(255),
+  post TEXT NOT NULL,
+  post_created DATETIME DEFAULT CURRENT_TIMESTAMP,
+  anonymous TINYINT(1) DEFAULT 0,
+  root_post INT(11),
+  FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE cascade,
+  FOREIGN KEY (root_post) REFERENCES posts(post_id) ON DELETE cascade
+);
+```
+
+| Field        | Type         | Null | Key | Default             | Extra          |
+|--------------|--------------|------|-----|---------------------|----------------|
+| post_id      | int(11)      | NO   | PRI | NULL                | auto_increment |
+| user_id      | varchar(255) | YES  | MUL | NULL                |                |
+| post         | text         | NO   |     | NULL                |                |
+| post_created | datetime     | YES  |     | current_timestamp() |                |
+| anonymous    | tinyint(1)   | YES  |     | 0                   |                |
+| root_post    | int(11)      | YES  | MUL | NULL                |                |
+
+
+
+
+
+## Table: Reactions
 
 
 ```mysql
@@ -102,6 +123,14 @@ CREATE TABLE reactions (
   PRIMARY KEY (user_id, post_id)
 );
 ```
+
+| Field   | Type         | Null | Key | Default | Extra |
+|---------|--------------|------|-----|---------|-------|
+| user_id | varchar(255) | NO   | PRI | NULL    |       |
+| post_id | int(11)      | NO   | PRI | NULL    |       |
+| vote    | int(11)      | NO   |     | 0       |       |
+
+
 
 
 ## Setup
