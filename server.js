@@ -135,6 +135,19 @@ app.post('/toggleAnonymous', authenticateUser, (req, res)=>{
   })
 });
 
+app.post('/showMyPosts', authenticateUser, (req, res)=>{
+  const userId = req.user.username;
+  const command = `
+  select * from posts
+  where user_id='${userId}';
+  `;
+  db.query(command, (err, results)=>{
+    if(err)return res.status(500).json({error: 'Error fetching posts that are reacted'});
+    return res.status(200).json(results);
+  })
+});
+
+
 
 //getQuesions function
 app.get('/getQuestions', (req, res) => {

@@ -1,5 +1,5 @@
 const questionsContainer = document.querySelector('.questions');
-const postId = window.location.pathname.substr(1); // Extract postId from the URL
+let postId = window.location.pathname.substr(1); // Extract postId from the URL
 const topQuestionPanel = document.querySelector('.topQuestionPanel');
 const repliesContainer = document.querySelector('.replies');
 const commentBox = document.querySelector('.comment-box');
@@ -18,6 +18,8 @@ let initialOffsetX = 0;
 const screenWidth = window.innerWidth;
 let newLeftWidth = left.style.width;
 let msgPortal = document.createElement('div');
+  const md = new MobileDetect(window.navigator.userAgent);
+
 msgPortal.innerHTML = `
 
 `;
@@ -30,10 +32,8 @@ anonymousButton.innerHTML = `
 document.addEventListener('DOMContentLoaded', () => {
 
     showQuestionsInLeftPanel();
-    rightPanelTopBar();
-    rightPanelGetReplies();
     searchInputListener();
-
+    refreshRightPanel();
 
     inputSearch.addEventListener('focus', () => {
         header.classList.add('focus');
@@ -54,14 +54,34 @@ document.addEventListener('DOMContentLoaded', () => {
     deviceAdjust();
 });
 
+function isIntegerString(input) {
+  // Use a regular expression to match only digits
+  return /^\d+$/.test(input);
+}
+
+function refreshRightPanel(){
+      if(isIntegerString(postId)){
+      rightPanel.style.display = 'flex';
+      rightPanel.style.flex = '1';
+      }
+      rightPanelTopBar();
+    rightPanelGetReplies();
+    deviceAdjust();
+
+}
+
 function deviceAdjust(){
-  const md = new MobileDetect(window.navigator.userAgent);
   const allElements = document.querySelectorAll('.header');
 
   if (!md.mobile()) {
     disableMobileStylesheet();
   }
   else{
+    if(isIntegerString(postId)){
+      rightPanel.style.display = 'flex';
+      rightPanel.style.flex = '1';
+      leftPanel.style.display = 'None';
+      }
     allElements.forEach(element => {
       element.style.fontSize = '20px';
     });
@@ -86,6 +106,12 @@ function sendTo(url) {
 
 
 function login(){
+  if(md.mobile()){
+    rightPanel.style.display="none";
+    leftPanel.style.display='flex';
+    leftPanel.style.flex = '1';
+    leftPanel.style.width = '100vw';
+  }
   questionsContainer.innerHTML = `
         <section class="forms-section">
         <div class="forms">
@@ -400,7 +426,7 @@ function showQuestionsInLeftPanel(){
               <div class="text post-created">${post.post_created}</div>
             </button>
               <button class="text btn post">
-                <a class="text fake-link" href="/${post.post_id}">
+                <a class="text fake-link" href='/${post.post_id}')">
                   <div class="text post">${post.post}</div>
                 </a>
               </button>
@@ -506,20 +532,20 @@ function handleVote(postId, voteType, vote_text) {
 async function getUsername(){
     const response = await fetch('/getUsername', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: localStorage.getItem('authToken')
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: localStorage.getItem('authToken')
+      }
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      const username = result.user_id;
+      console.log(username);
+      return username;
     }
-  });
-
-  const result = await response.json();
-
-  if (response.ok) {
-    const username = result.user_id;
-    console.log(username);
-    return username;
-  }
-  return "";
+    return "";
 }
 
 async function navToolBar(){
@@ -591,6 +617,14 @@ async function navToolBar(){
         </div>
 
 
+        <div class="trash-section" onclick="deleteUsersOrPosts()">
+            <span class="trash">
+                <span></span>
+                <i></i>
+            </span>
+        </div>
+
+
 
       <div class="main newPostArea">
           <span>P</span>
@@ -609,6 +643,7 @@ async function navToolBar(){
   `;
   const checkbox = questionsContainer.querySelector('input[type="checkbox"]');
   const postTextBox = questionsContainer.querySelector('.new-post-submit');
+  const animatedMail = questionsContainer.querySelector('.letter-image');
   checkbox.addEventListener('change', () => {
     if (checkbox.checked) {
       checkbox.classList.add('checkbox-toggled');
@@ -619,6 +654,7 @@ async function navToolBar(){
   if(username===''){
     questionsContainer.querySelector('.bounce-logout').style.display='None';
     checkbox.style.display = 'None';
+    animatedMail.style.display = 'None';
     questionsContainer.querySelector('.newPostArea').style.display = 'None';
   }
   else{
@@ -633,6 +669,9 @@ async function navToolBar(){
     } else {
       checkbox.classList.add('checkbox-toggled');  // Checked
     }
+
+    animatedMail.addEventListener('click', showMyPosts);
+
   }
 
 
@@ -671,6 +710,57 @@ function newPostSubmit(root_post, txt){
 
 
 
+function showMyPosts(){
+    fetch('/showMyPosts', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: localStorage.getItem('authToken')
+    }
+  })
+    .then(response => response.json())
+    .then(result => {
+      console.log(result);
+      // if (!result.postId)throw new Error(result.error);
+      questionsContainer.innerHTML='';
+      result.forEach(post => {
+        console.log(post);
+        const postDiv = document.createElement('div');
+        postDiv.innerHTML = `
+          <div class="text one_quesion">
+            <button class="text btn user-id">
+              ${post.user_id}
+              <div class="text post-created">${post.post_created}</div>
+            </button>
+              <button class="text btn post">
+                <a class="text fake-link" href="/${post.post_id}">
+                  <div class="text post">${post.post}</div>
+                </a>
+              </button>
+          </div>
+        `;
+        questionsContainer.appendChild(postDiv);
+      });
+    })
+    .catch(error => {
+      login();
+      console.log('hoilo na kono karone');
+      // Error handling
+    });
+}
+
+
+function deleteUsersOrPosts(){
+  questionsContainer.innerHTML = `
+    <select class="box">
+      <option selected>User</option>
+      <option>Post</option>
+    </select>
+    <input type="text" class="btn post box">
+  `;
+
+}
+
 function toggleAnonymous() {
     fetch('/toggleAnonymous', {
     method: 'POST',
@@ -700,3 +790,13 @@ switchers.forEach(item => {
 		this.parentElement.classList.add('is-active')
 	})
 });
+
+
+// Change the address without refreshing the page
+function changeAddressWithoutRefresh(newURL) {
+  window.history.pushState(null, '', newURL);
+  postId = newURL;
+  refreshRightPanel();
+}
+
+changeAddressWithoutRefresh(newURL);

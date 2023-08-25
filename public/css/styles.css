@@ -224,6 +224,7 @@ reply{
   width: 36px;
   height: 36px;
   font-size: 22px;
+  padding: 20px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -664,4 +665,17 @@ a:hover{
 a:hover + .icon{
   border: 3px solid #2ecc71;
   right: -25%;
+}
+
+
+
+.box {
+  outline: none;
+  padding: 20px;
+  border: 1px solid #999;
+  font-size: 50px;
+  color: #1c87c9;
+  background-color: #eee;
+  border-radius: 5px;
+  box-shadow: 4px 4px #ccc;
 }

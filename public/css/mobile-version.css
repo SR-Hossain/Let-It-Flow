@@ -21,7 +21,9 @@
 }
 
 
-
+.right-panel {
+  height: 95vh !important;
+}
 
 .pristineTop{
   display: flex;
