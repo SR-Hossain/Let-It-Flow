@@ -473,3 +473,125 @@ admin_app.get('/searchPosts', (req, res) => {
     return res.status(200).json(results);
   });
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const moderator_app = express();
+moderator_app.use(express.json());
+moderator_app.use(bodyParser.urlencoded({ extended: false }));
+moderator_app.use(bodyParser.json());
+const port3 = 5000;
+moderator_app.use(express.static(path.join(__dirname, 'moderator')));
+moderator_app.listen(port3, () => {
+  console.log('Moderator Server started at ' + port3);
+});
+
+moderator_app.post('/admin_login', (req, res) => {
+    const password = req.body.password;
+    const username = req.body.username;
+
+    db.query(`select password from users where user_id=?`, username, (err, results)=>{
+      if(err)return  res.status(500).json({error: 'Error!!!'});
+      const hashedPass = results[0].password;
+      const isPasswordValid = bcrypt.compare(password, hashedPass);
+      if (!isPasswordValid) return res.status(401).json({ message: 'Authentication failed' });
+      const token = jwt.sign({ username: username }, jwtSecretKey, {expiresIn: '1h'});
+      return res.json({ token, message: 'Login successful' });
+    });
+});
+moderator_app.post('/isItAdmin', authenticateUser, (req, res) => {
+  return res.status(200).json({message: 'Login successful'});
+});
+moderator_app.get('/searchUsers', (req, res) => {
+  const searchQuery = req.query.q;
+  const role = req.query.role;
+  let condition = '';
+  if(role!='All')condition = `and role='${role}'`;
+  db.query(`select user_id, role from users where user_id like '%${searchQuery}%' and role!='Admin' and role!='Moderator' ${condition}`, (err, results)=>{
+    if(err)return res.status(500).json({error: 'Error fetching posts that are reacted'});
+    return res.status(200).json(results);
+  });
+});
+moderator_app.post('/userRoleUpdate', authenticateUser, (req, res)=>{
+  const username = req.body.username;
+  const newRole = req.body.newRole;
+  const command = `
+    update users set role='${newRole}' where user_id='${username}' and role!='Admin' and role!='Moderator'
+  `;
+  db.query(command, (err, results)=>{
+    if(err)return res.status(500).json({error: 'Error fetching posts'});
+    return res.status(200).json({ message: 'success' });
+  })
+});
+moderator_app.post('/removeUser', authenticateUser, (req, res)=>{
+  const username = req.body.username;
+  const command = `
+    delete from users where user_id='${username}' and role!='Admin' and role!='Moderator'
+  `;
+  db.query(command, (err, results)=>{
+    if(err)return res.status(500).json({error: 'Error fetching posts'});
+    return res.status(200).json({ message: 'success' });
+  })
+});
+moderator_app.post('/removePost', authenticateUser, (req, res)=>{
+  const postId = req.body.postId;
+  const command = `
+    delete from posts natural join users where post_id=${postId} and role!='Admin' and role!='Moderator'
+  `;
+  db.query(command, (err, results)=>{
+    if(err)return res.status(500).json({error: 'Error fetching posts'});
+    return res.status(200).json({ message: 'success' });
+  })
+});
+moderator_app.get('/searchPosts', (req, res) => {
+  const searchQuery = req.query.q;
+  let postIdNum = 0;
+  try{
+    postIdNum = parseInt(searchQuery);
+  }catch(error){}
+  if(!postIdNum)postIdNum=0;
+  const searchWords = searchQuery.split(' ');
+  const placeholders = searchWords.map(() => '?').join(', ');
+  const whereClause = '(' + searchWords.map(word => `(post LIKE '%${word}%')+(user_id like '${word}%')`).join(' + ')  + ')';
+
+  const queryParams = searchWords.map(word => `%${word}%`);
+  const query = `SELECT unique
+  post_id, post, role, root_post, DATE_FORMAT(post_created, '%h:%i:%s%p, %d %b %Y') as post_created,
+       CASE WHEN anonymous = 1 THEN 'Anonymous' ELSE user_id END AS user_id,
+        ${whereClause} AS match_count FROM posts natural join users WHERE role!='Admin' and role!='Moderator' and (${whereClause} or post_id=${postIdNum} or post_id div 10=${postIdNum} or post_id div 100=${postIdNum} or post_id div 1000=${postIdNum} or post_id div 10000=${postIdNum}) ORDER BY match_count DESC`;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error fetching similar posts:', err);
+      return res.status(500).json({ error: 'Error fetching similar posts' });
+    }
+
+    return res.status(200).json(results);
+  });
+});
