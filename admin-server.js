@@ -11,8 +11,23 @@ const jwt = require('jsonwebtoken');
 const salt = '$2b$10$ZXcDtjTdm3Wf4.tQJRaJjO';
 
 
+const allowedIPs = ['127.0.0.1', '::1'];
+const app2 = express();
+const allowOnlyAllowedIPs = (req, res, next) => {
+  const clientIP = req.connection.remoteAddress;
+  if (!allowedIPs.includes(clientIP)) {
+    return res.status(403).json({ error: 'Access forbidden from this IP' });
+  }
+  next();
+};
+app2.use(allowOnlyAllowedIPs);
+const port2 = 4000;
+app2.listen(port2, () => {
+  console.log('Server started at ' + port2);
+});
+
 const app = express();
-const port = 3000;
+const port = 3001;
 // Your JWT secret key
 const jwtSecretKey = 'f4.tQJRaJjOzI5DqYZ6.guqqKFw14fVjYvXvU1CjGS';
 
@@ -45,7 +60,7 @@ module.exports = db;
 
 // Serve static files from the 'public' folder
 app.use(express.static(path.join(__dirname, 'public')));
-
+app2.use(express.static(path.join(__dirname, 'admin')));
 // Middleware to verify JWT token and check authentication
 const authenticateUser = (req, res, next) => {
   const token = req.headers.authorization;
@@ -68,9 +83,9 @@ const authenticateUser = (req, res, next) => {
 
 app.post('/getUsername', authenticateUser, (req, res) => {
   const username = req.user.username;
-  db.query(`select anonymous from users where user_id=?`, username, (err, results)=>{
+  db.query(`select role from users where user_id=?`, username, (err, results)=>{
     if(err)return res.status(500).json({error: 'kisu ekta error hoise'});
-    if(results[0].anonymous===0)return res.status(200).json({user_id: username});
+    if(!results[0].role)return res.status(200).json({user_id: username});
     return res.status(200).json({user_id: 'Anonymous'});
   });
 
@@ -81,7 +96,7 @@ app.post('/postSubmit', authenticateUser, (req, res) => {
   const username = req.user.username;
   const text = req.body.txt;
   const root_post = req.body.root_post;
-  const query1 = `select anonymous from users where user_id='${username}'`;
+  const query1 = `select role from users where user_id='${username}'`;
   const query2 = `
   WITH RECURSIVE NumberSequence AS (
     SELECT 1 AS num
@@ -101,7 +116,7 @@ app.post('/postSubmit', authenticateUser, (req, res) => {
   db.query(query1, (err, results)=>{
     if(err)return res.status(500).json({error: 'kisu ekta error hoise'});
     let anonymous = 0;
-    if (results[0].anonymous===1)anonymous = 1;
+    if (results[0].role==='anonymous')anonymous = 1;
     db.query(query2, (err, results)=>{
       if(err)return res.status(500).json({error: 'query2 te ashe nai'});
       const postId = results[0].first_missing_post_id;
@@ -125,9 +140,11 @@ app.post('/toggleAnonymous', authenticateUser, (req, res)=>{
   const userId = req.user.username;
   const command = `
   update users
-  set anonymous = not anonymous
-  where user_id='${userId}'
-  and role='General'
+  set role=case
+  when role='anonymous' then null
+  else 'anonymous'
+  end
+  where user_id='${userId}';
   `;
   db.query(command, (err, results)=>{
     if(err)return res.status(500).json({error: 'Error fetching posts that are reacted'});
@@ -170,11 +187,6 @@ app.get('/getQuestions', (req, res) => {
 app.get('/getResults', (req, res) => {
 
   const searchQuery = req.query.q;
-  let postIdNum = 0;
-  try{
-    postIdNum = parseInt(searchQuery);
-  }catch(error){}
-  if(!postIdNum)postIdNum=0;
   const searchWords = searchQuery.split(' ');
 
   // Generate placeholders for the search words
@@ -189,7 +201,7 @@ app.get('/getResults', (req, res) => {
   const query = `SELECT unique
   post_id, post, root_post, DATE_FORMAT(post_created, '%h:%i:%s%p, %d %b %Y') as post_created,
        CASE WHEN anonymous = 1 THEN 'Anonymous' ELSE user_id END AS user_id,
-        ${whereClause} AS match_count FROM posts WHERE ${whereClause} or post_id=${postIdNum} or post_id div 10=${postIdNum} or post_id div 100=${postIdNum} or post_id div 1000=${postIdNum} or post_id div 10000=${postIdNum} ORDER BY match_count DESC`;
+        ${whereClause} AS match_count FROM posts WHERE ${whereClause} ORDER BY match_count DESC`;
 
   db.query(query, (err, results) => {
     if (err) {
@@ -300,11 +312,7 @@ app.post('/getPostWhereCurrentUserReactionExists', authenticateUser, (req, res)=
 
 // Serve index.html when accessing the root URL
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-app.get('/:postId', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'admin', 'index.html'));
 });
 
 
@@ -350,126 +358,3 @@ app.listen(port, () => {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-const allowedIPs = ['127.0.0.1', '::1'];
-const admin_app = express();
-admin_app.use(express.json());
-const allowOnlyAllowedIPs = (req, res, next) => {
-  const clientIP = req.connection.remoteAddress;
-  if (!allowedIPs.includes(clientIP)) {
-    console.log(clientIP);
-    return res.status(403).json({ error: 'Access forbidden from this IP' });
-  }
-  next();
-};
-admin_app.use(allowOnlyAllowedIPs);
-admin_app.use(bodyParser.urlencoded({ extended: false }));
-admin_app.use(bodyParser.json());
-const port2 = 4000;
-admin_app.use(express.static(path.join(__dirname, 'admin')));
-admin_app.listen(port2, () => {
-  console.log('Server started at ' + port2);
-});
-
-admin_app.post('/admin_login', (req, res) => {
-    const password = req.body.password;
-    const username = 'Admin^$&*@&$&@G@$&*#@';
-
-    db.query(`select password from users where user_id=?`, username, (err, results)=>{
-      if(err)return  res.status(500).json({error: 'Error!!!'});
-      const hashedPass = results[0].password;
-      const isPasswordValid = bcrypt.compare(password, hashedPass);
-      if (!isPasswordValid) return res.status(401).json({ message: 'Authentication failed' });
-      const token = jwt.sign({ username: username }, jwtSecretKey, {expiresIn: '1h'});
-      return res.json({ token, message: 'Login successful' });
-    });
-});
-admin_app.post('/isItAdmin', authenticateUser, (req, res) => {
-  return res.status(200).json({message: 'Login successful'});
-});
-admin_app.get('/searchUsers', (req, res) => {
-  const searchQuery = req.query.q;
-  const role = req.query.role;
-  let condition = '';
-  if(role!='All')condition = `and role='${role}'`;
-  db.query(`select user_id, role from users where user_id like '%${searchQuery}%' and role!='Admin' ${condition}`, (err, results)=>{
-    if(err)return res.status(500).json({error: 'Error fetching posts that are reacted'});
-    return res.status(200).json(results);
-  });
-});
-admin_app.post('/userRoleUpdate', authenticateUser, (req, res)=>{
-  const username = req.body.username;
-  const newRole = req.body.newRole;
-  const command = `
-    update users set role='${newRole}' where user_id='${username}' and role!='Admin'
-  `;
-  db.query(command, (err, results)=>{
-    if(err)return res.status(500).json({error: 'Error fetching posts'});
-    return res.status(200).json({ message: 'success' });
-  })
-});
-admin_app.post('/removeUser', authenticateUser, (req, res)=>{
-  const username = req.body.username;
-  const command = `
-    delete from users where user_id='${username}' and role!='Admin'
-  `;
-  db.query(command, (err, results)=>{
-    if(err)return res.status(500).json({error: 'Error fetching posts'});
-    return res.status(200).json({ message: 'success' });
-  })
-});
-admin_app.post('/removePost', authenticateUser, (req, res)=>{
-  const postId = req.body.postId;
-  const command = `
-    delete from posts where post_id=${postId}
-  `;
-  db.query(command, (err, results)=>{
-    if(err)return res.status(500).json({error: 'Error fetching posts'});
-    return res.status(200).json({ message: 'success' });
-  })
-});
-admin_app.get('/searchPosts', (req, res) => {
-  const searchQuery = req.query.q;
-  let postIdNum = 0;
-  try{
-    postIdNum = parseInt(searchQuery);
-  }catch(error){}
-  if(!postIdNum)postIdNum=0;
-  const searchWords = searchQuery.split(' ');
-  const placeholders = searchWords.map(() => '?').join(', ');
-  const whereClause = '(' + searchWords.map(word => `(post LIKE '%${word}%')+(user_id like '${word}%')`).join(' + ')  + ')';
-
-  const queryParams = searchWords.map(word => `%${word}%`);
-  const query = `SELECT unique
-  post_id, post, root_post, DATE_FORMAT(post_created, '%h:%i:%s%p, %d %b %Y') as post_created,
-       CASE WHEN anonymous = 1 THEN 'Anonymous' ELSE user_id END AS user_id,
-        ${whereClause} AS match_count FROM posts WHERE ${whereClause} or post_id=${postIdNum} or post_id div 10=${postIdNum} or post_id div 100=${postIdNum} or post_id div 1000=${postIdNum} or post_id div 10000=${postIdNum} ORDER BY match_count DESC`;
-
-  db.query(query, (err, results) => {
-    if (err) {
-      console.error('Error fetching similar posts:', err);
-      return res.status(500).json({ error: 'Error fetching similar posts' });
-    }
-
-    return res.status(200).json(results);
-  });
-});

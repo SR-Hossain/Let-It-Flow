@@ -537,7 +537,6 @@ async function getUsername(){
         Authorization: localStorage.getItem('authToken')
       }
     });
-
     const result = await response.json();
 
     if (response.ok) {
@@ -617,12 +616,7 @@ async function navToolBar(){
         </div>
 
 
-        <div class="trash-section" onclick="deleteUsersOrPosts()">
-            <span class="trash">
-                <span></span>
-                <i></i>
-            </span>
-        </div>
+
 
 
 
@@ -750,16 +744,7 @@ function showMyPosts(){
 }
 
 
-function deleteUsersOrPosts(){
-  questionsContainer.innerHTML = `
-    <select class="box">
-      <option selected>User</option>
-      <option>Post</option>
-    </select>
-    <input type="text" class="btn post box">
-  `;
 
-}
 
 function toggleAnonymous() {
     fetch('/toggleAnonymous', {
