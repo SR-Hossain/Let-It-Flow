@@ -366,7 +366,31 @@ app.post('/showMyInbox', authenticateUser, (req, res)=>{
   });
 });
 app.post('/showChat', authenticateUser, (req, res)=>{
+  const username = req.user.username;
+  const friend = req.body.user;
+  const query = `
+    select * from inbox where (sender='${username}' and receiver='${friend}') or (receiver='${username}' and sender='${friend}') order by msg_sent_time desc;
+  `;
 
+  db.query(query, (err, results)=>{
+    if(err)return res.status(500).json({error: 'error hoise'});
+    return res.status(200).json(results);
+  });
+});
+
+app.post('/sendMessage', authenticateUser, (req, res)=>{
+  const username = req.user.username;
+  const friend = req.body.user;
+  const message = req.body.message;
+  const anonymous = req.body.anonymous;
+  const query = `
+    insert into inbox(sender, receiver, message, anonymous) values('${username}', '${friend}', '${message}', ${anonymous})
+  `;
+
+  db.query(query, (err, results)=>{
+    if(err)return res.status(500).json({error: 'error hoise'});
+    return res.status(200).json(results);
+  });
 });
 
 

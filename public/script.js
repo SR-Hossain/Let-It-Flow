@@ -269,7 +269,7 @@ function rightPanelTopBar(){
                 <a class="text fake-link-long" href="/${post.post_id}">
                   <div class="text post">${post.post}</div>
                 </a>
-              <button class="text btn user-id-short">
+              <button class="text btn user-id-short" onclick="showChatBoxInRightPanel('${post.user_id}')">
                 ${post.user_id}
                 <div class="text post-created">${post.post_created}</div>
               </button>
@@ -313,7 +313,7 @@ function rightPanelGetReplies(){
         replies.forEach(reply => {
           const replyDiv = document.createElement('div');
           replyDiv.innerHTML = `
-            <div class="text reply-section">
+            <div class="text reply-section" onclick="showChatBoxInRightPanel('${reply.user_id}')">
               <a href="/${reply.post_id}" class="text fake-link comments">
                 <div class="text sender">${reply.user_id} (${reply.role}) → ${reply.post_created}</div>
                 <div class="text clickOnReplies">${reply.post}</div>
@@ -381,7 +381,7 @@ function searchInputListener(){
               const postDiv = document.createElement('div');
               postDiv.innerHTML = `
                 <div class="text one_quesion">
-                  <button class="text btn user-id">
+                  <button class="text btn user-id" onclick="showChatBoxInRightPanel('${post.user_id}')">
                     ${post.user_id} (${post.role})
                     <div class="text post-created">${post.post_created}</div>
                   </button>
@@ -421,7 +421,7 @@ function showQuestionsInLeftPanel(){
         const postDiv = document.createElement('div');
         postDiv.innerHTML = `
           <div class="text one_quesion">
-            <button class="text btn user-id">
+            <button class="text btn user-id" onclick="showChatBoxInRightPanel('${post.user_id}')">
               ${post.user_id} (${post.role})
               <div class="text post-created">${post.post_created}</div>
             </button>
@@ -721,7 +721,7 @@ function showMyInbox(){
         const postDiv = document.createElement('div');
         postDiv.innerHTML = `
           <div class="text one_quesion">
-            <button class="text btn user-id">
+            <button class="text btn user-id" onclick="showChatBoxInRightPanel('${inbox.users}')">
               ${inbox.users}
             </button>
               <button class="text btn post">
@@ -746,9 +746,100 @@ function showMyInbox(){
 
 
 function showChatBoxInRightPanel(user){
+  rightPanel.style.display = 'flex';
+  topQuestionPanel.innerHTML = `
+    <div class="btn inbox-header selected_post">
+    ${user}
+    </div>
+  `;
 
+
+  commentBox.innerHTML = `
+            <span class="spacious">
+              <textarea type="text" class="nobg"></textarea>
+            </span>
+            <button class="text comment-submit-btn">
+              <i class="text fas fa-paper-plane"></i> <!-- Font Awesome paper plane icon -->
+            </button>
+          `;
+        commentBox.querySelector('.comment-submit-btn').addEventListener('click', function(){
+          sendMessage(user, commentBox.querySelector('.nobg').value);
+        });
+
+
+  fetch('/showChat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: localStorage.getItem('authToken')
+    },
+    body: JSON.stringify({user})
+  })
+    .then(response => response.json())
+    .then(result => {
+      console.log(result);
+      // if (!result.postId)throw new Error(result.error);
+      repliesContainer.innerHTML='';
+      result.forEach(inbox => {
+        const postDiv = document.createElement('div');
+        postDiv.innerHTML = `
+          <div class="text one_quesion sent">
+            <button class="text btn user-id" onclick="showChatBoxInRightPanel('${inbox.sender}')">
+              ${inbox.sender}
+            </button>
+              <button class="text btn post">
+                <a class="text fake-link">
+                  <div class="text post">${inbox.message}</div>
+                </a>
+              </button>
+          </div>
+          <div class="text one_quesion received">
+
+              <button class="text btn post">
+                <a class="text fake-link">
+                  <div class="text post">${inbox.message}</div>
+                </a>
+              </button>
+              <button class="text btn user-id" onclick="showChatBoxInRightPanel('${inbox.sender}')">
+              ${inbox.sender}
+            </button>
+          </div>
+        `;
+        if(user===inbox.sender){
+          postDiv.querySelector('.received').style.display= 'none';
+        }
+        else postDiv.querySelector('.sent').style.display= 'none';
+        postDiv.querySelector('.post').addEventListener('click', function(){
+          showChatBoxInRightPanel(inbox.users);
+        });
+        repliesContainer.appendChild(postDiv);
+      });
+    })
+    .catch(error => {
+      login();
+      console.log('hoilo na kono karone');
+      // Error handling
+    });
 }
 
+
+function sendMessage(user, message, anonymous){
+  fetch('/sendMessage', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: localStorage.getItem('authToken')
+    },
+    body: JSON.stringify({user, message, anonymous})
+  })
+    .then(response => response.json())
+    .then(result => {
+        showChatBoxInRightPanel(user);
+    })
+    .catch(error => {
+      console.log('hoilo na');
+    });
+}
 
 
 function toggleAnonymous() {

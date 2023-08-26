@@ -679,3 +679,27 @@ a:hover + .icon{
   border-radius: 5px;
   box-shadow: 4px 4px #ccc;
 }
+
+
+.inbox-header {
+  padding: 30px;
+  width: 100%;
+  text-align: center !important;
+}
+
+
+.sent {
+  width: 60%;
+  float: left;
+  clear: both;
+  padding: 30px;
+}
+
+
+.received {
+  width: 60%;
+float: right;
+  /* Add clear property to avoid affecting other elements */
+  clear: both;
+  padding: 30px;
+}
