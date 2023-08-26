@@ -152,9 +152,9 @@ app.post('/showMyPosts', authenticateUser, (req, res)=>{
 //getQuesions function
 app.get('/getQuestions', (req, res) => {
   const query = `
-  SELECT post_id, post, root_post, DATE_FORMAT(post_created, '%h:%i:%s%p, %d %b %Y') as post_created,
+  SELECT post_id, post, role, root_post, DATE_FORMAT(post_created, '%h:%i:%s%p, %d %b %Y') as post_created,
        CASE WHEN anonymous = 1 THEN 'Anonymous' ELSE user_id END AS user_id
-  FROM posts
+  FROM posts natural join users
   WHERE root_post is null;
   `;
   db.query(query, (err, results) => {
@@ -187,9 +187,9 @@ app.get('/getResults', (req, res) => {
 
   // Use the WHERE clause and placeholders in the query
   const query = `SELECT unique
-  post_id, post, root_post, DATE_FORMAT(post_created, '%h:%i:%s%p, %d %b %Y') as post_created,
+  post_id, post, role, root_post, DATE_FORMAT(post_created, '%h:%i:%s%p, %d %b %Y') as post_created,
        CASE WHEN anonymous = 1 THEN 'Anonymous' ELSE user_id END AS user_id,
-        ${whereClause} AS match_count FROM posts WHERE ${whereClause} or post_id=${postIdNum} or post_id div 10=${postIdNum} or post_id div 100=${postIdNum} or post_id div 1000=${postIdNum} or post_id div 10000=${postIdNum} ORDER BY match_count DESC`;
+        ${whereClause} AS match_count FROM posts natural join users WHERE ${whereClause} or post_id=${postIdNum} or post_id div 10=${postIdNum} or post_id div 100=${postIdNum} or post_id div 1000=${postIdNum} or post_id div 10000=${postIdNum} ORDER BY match_count DESC`;
 
   db.query(query, (err, results) => {
     if (err) {
@@ -204,10 +204,10 @@ app.get('/getResults', (req, res) => {
 app.get('/getReplies=:postId', (req, res) => {
   const postId = req.params.postId;
   const query = `
-  SELECT post_id, post, root_post, DATE_FORMAT(post_created, '%h:%i:%s%p, %d %b %Y') as post_created,
+  SELECT post_id, post, role, root_post, DATE_FORMAT(post_created, '%h:%i:%s%p, %d %b %Y') as post_created,
         CASE WHEN anonymous = 1 THEN 'Anonymous' ELSE user_id END AS user_id,
-        (select coalesce(sum(reactions.vote),0) from reactions where posts.post_id=reactions.post_id) as votes
-  FROM posts
+        (select coalesce(sum(reactions.vote),0) from reactions natural join users where posts.post_id=reactions.post_id) as votes
+  FROM posts natural join users
   WHERE root_post=${postId}
   ORDER BY votes desc, post_created DESC;
   `;
@@ -222,9 +222,9 @@ app.get('/getReplies=:postId', (req, res) => {
 app.get('/getPost=:postId', (req, res) => {
   const postId = req.params.postId;
   const query = `
-  SELECT post_id, post, root_post, DATE_FORMAT(post_created, '%h:%i:%s%p, %d %b %Y') as post_created,
+  SELECT post_id, role, post, root_post, DATE_FORMAT(post_created, '%h:%i:%s%p, %d %b %Y') as post_created,
        CASE WHEN anonymous = 1 THEN 'Anonymous' ELSE user_id END AS user_id
-  FROM posts
+  FROM posts natural join users
   WHERE post_id = ${postId};
   `;
   console.log(query);
@@ -460,9 +460,9 @@ admin_app.get('/searchPosts', (req, res) => {
 
   const queryParams = searchWords.map(word => `%${word}%`);
   const query = `SELECT unique
-  post_id, post, root_post, DATE_FORMAT(post_created, '%h:%i:%s%p, %d %b %Y') as post_created,
+  post_id, post, role, root_post, DATE_FORMAT(post_created, '%h:%i:%s%p, %d %b %Y') as post_created,
        CASE WHEN anonymous = 1 THEN 'Anonymous' ELSE user_id END AS user_id,
-        ${whereClause} AS match_count FROM posts WHERE ${whereClause} or post_id=${postIdNum} or post_id div 10=${postIdNum} or post_id div 100=${postIdNum} or post_id div 1000=${postIdNum} or post_id div 10000=${postIdNum} ORDER BY match_count DESC`;
+        ${whereClause} AS match_count FROM posts natural join users WHERE ${whereClause} or post_id=${postIdNum} or post_id div 10=${postIdNum} or post_id div 100=${postIdNum} or post_id div 1000=${postIdNum} or post_id div 10000=${postIdNum} ORDER BY match_count DESC`;
 
   db.query(query, (err, results) => {
     if (err) {

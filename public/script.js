@@ -315,7 +315,7 @@ function rightPanelGetReplies(){
           replyDiv.innerHTML = `
             <div class="text reply-section">
               <a href="/${reply.post_id}" class="text fake-link comments">
-                <div class="text sender">${reply.user_id} → ${reply.post_created}</div>
+                <div class="text sender">${reply.user_id} (${reply.role}) → ${reply.post_created}</div>
                 <div class="text clickOnReplies">${reply.post}</div>
                 <div class="text divider"></div> <!-- Dividing line -->
                 <div class="text replies-info"></div>
@@ -382,7 +382,7 @@ function searchInputListener(){
               postDiv.innerHTML = `
                 <div class="text one_quesion">
                   <button class="text btn user-id">
-                    ${post.user_id}
+                    ${post.user_id} (${post.role})
                     <div class="text post-created">${post.post_created}</div>
                   </button>
                     <button class="text btn post">
@@ -422,7 +422,7 @@ function showQuestionsInLeftPanel(){
         postDiv.innerHTML = `
           <div class="text one_quesion">
             <button class="text btn user-id">
-              ${post.user_id}
+              ${post.user_id} (${post.role})
               <div class="text post-created">${post.post_created}</div>
             </button>
               <button class="text btn post">
@@ -784,4 +784,3 @@ function changeAddressWithoutRefresh(newURL) {
   refreshRightPanel();
 }
 
-changeAddressWithoutRefresh(newURL);

@@ -66,6 +66,9 @@
 .post {
     width: 50%;
 }
+.user-id {
+    width: 70%;
+}
 
 .post-user-id {
     background-image: linear-gradient(to left, #2b2c2e, #485563, black, black) !important;

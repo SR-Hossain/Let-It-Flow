@@ -215,7 +215,7 @@ function searchPosts(searchQuery){
               postDiv.innerHTML = `
                 <div class="text one_quesion">
                   <button class="text btn post-user-id">
-                    ${post.user_id}
+                    ${post.user_id} (${post.role})
                     <div class="text post-created">${post.post_created}</div>
                   </button>
                     <button class="text btn post">
