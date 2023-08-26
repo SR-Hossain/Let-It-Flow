@@ -664,7 +664,7 @@ async function navToolBar(){
       checkbox.classList.add('checkbox-toggled');  // Checked
     }
 
-    animatedMail.addEventListener('click', showMyPosts);
+    animatedMail.addEventListener('click', showMyInbox);
 
   }
 
@@ -704,8 +704,8 @@ function newPostSubmit(root_post, txt){
 
 
 
-function showMyPosts(){
-    fetch('/showMyPosts', {
+function showMyInbox(){
+    fetch('/showMyInbox', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -717,22 +717,23 @@ function showMyPosts(){
       console.log(result);
       // if (!result.postId)throw new Error(result.error);
       questionsContainer.innerHTML='';
-      result.forEach(post => {
-        console.log(post);
+      result.forEach(inbox => {
         const postDiv = document.createElement('div');
         postDiv.innerHTML = `
           <div class="text one_quesion">
             <button class="text btn user-id">
-              ${post.user_id}
-              <div class="text post-created">${post.post_created}</div>
+              ${inbox.users}
             </button>
               <button class="text btn post">
-                <a class="text fake-link" href="/${post.post_id}">
-                  <div class="text post">${post.post}</div>
+                <a class="text fake-link">
+                  <div class="text post">${inbox.message}</div>
                 </a>
               </button>
           </div>
         `;
+        postDiv.querySelector('.post').addEventListener('click', function(){
+          showChatBoxInRightPanel(inbox.users);
+        });
         questionsContainer.appendChild(postDiv);
       });
     })
@@ -743,6 +744,10 @@ function showMyPosts(){
     });
 }
 
+
+function showChatBoxInRightPanel(user){
+
+}
 
 
 

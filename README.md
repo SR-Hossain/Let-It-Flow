@@ -131,7 +131,25 @@ CREATE TABLE reactions (
 | post_id | int(11)      | NO   | PRI | NULL    |       |
 | vote    | int(11)      | NO   |     | 0       |       |
 
+## Table: Inbox
 
+```mysql
+CREATE TABLE inbox (
+    msg_id INT AUTO_INCREMENT PRIMARY KEY,
+    sender VARCHAR(255) REFERENCES users(user_id) ON DELETE SET NULL,
+    receiver VARCHAR(255) REFERENCES users(user_id) ON DELETE SET NULL,
+    message VARCHAR(255) NOT NULL,
+    msg_sent_time DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+| Field         | Type         | Null | Key | Default             | Extra |
+|---------------|--------------|------|-----|---------------------|-------|
+| msg_id        | int(11)      | NO   | PRI | NULL                |       |
+| sender        | varchar(255) | YES  | MUL | NULL                |       |
+| receiver      | varchar(255) | YES  | MUL | NULL                |       |
+| message       | varchar(255) | NO   |     | NULL                |       |
+| msg_sent_time | datetime     | YES  |     | current_timestamp() |       |
 
 
 ## Setup

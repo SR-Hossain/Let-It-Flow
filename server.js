@@ -340,6 +340,34 @@ app.post('/signup', async (req, res) => {
       return res.status(200).json(results);
     });
 });
+app.post('/showMyInbox', authenticateUser, (req, res)=>{
+  const username = req.user.username;
+  const query = `
+    SELECT *
+    FROM (
+        SELECT users, MAX(msg_sent_time) AS msg_sent_time
+        FROM (
+            SELECT receiver AS users, msg_sent_time, message
+            FROM inbox
+            WHERE sender = '${username}'
+            UNION
+            SELECT sender AS users, msg_sent_time, message
+            FROM inbox
+            WHERE receiver = '${username}'
+        ) subquery
+        GROUP BY users
+    ) recent_time
+    NATURAL JOIN inbox
+    ORDER BY msg_sent_time DESC;
+  `;
+  db.query(query, (err, results)=>{
+    if(err)return res.status(500).json({error: 'error hoise'});
+    return res.status(200).json(results);
+  });
+});
+app.post('/showChat', authenticateUser, (req, res)=>{
+
+});
 
 
 
