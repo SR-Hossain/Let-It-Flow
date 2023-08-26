@@ -34,10 +34,17 @@ reply{
 
 
 .questions{
+    max-width: 900px;
     width: 100%;
+    height: 100%;
     flex-direction: column;
+    overflow-y: auto !important;
+    padding: 20px;
 }
 
+.comments {
+  max-width: 80%;
+}
 
 .topQuestionPanel{
     width: 100%;
@@ -61,7 +68,9 @@ reply{
     flex-direction: column;
     padding: 5px;
 }
-
+.right-side {
+  overflow-y: auto;
+}
 .fullPage {
   background-image: linear-gradient(to right, #29323c, #485563, #2b5876, #4e4376);
     box-shadow: 0 4px 15px 0 rgba(45, 54, 65, 0.75);
@@ -110,6 +119,13 @@ reply{
     outline: none;
 }
 
+.text-post {
+  width: 100% !important;
+}
+.userandreaction {
+  display: flex;
+  flex-direction: column;
+}
 
 
 .user-id {
@@ -124,7 +140,8 @@ reply{
     padding: 10px;
 }
 .user-id-short {
-    width: 30%;
+    width: 100%;
+    max-height: 100px;
     flex:1;
     padding: 10px;
     box-sizing: border-box;
@@ -266,6 +283,9 @@ reply{
 .comment-input::placeholder {
   color: #aaa;
 }
+.arrow_left {
+  height: 50px;
+}
 
 /* Style for creating a chat-like appearance */
 .comment-box::before {
@@ -354,6 +374,7 @@ reply{
 
 .left-panel {
   display: flex;
+  max-width: 35vw;
   flex-direction: column;
 }
 
@@ -364,6 +385,8 @@ reply{
 
 .reply-section {
   display: flex;
+  position: relative;
+  left: 10%;
   justify-content: space-between;
   /* ... Other styles ... */
 }
@@ -406,7 +429,7 @@ reply{
 
 /* Style the "X replies" text */
 .replies-info {
-  font-size: 14px;
+  font-size: 24px;
   color: #777;
   margin: 10px; /* Adjust the margin as needed */
 }
@@ -657,7 +680,6 @@ a{
 }
 
 a:hover{
-    transform: scale(1.2);
   border: 3px solid #2ecc71;
   color: #2ecc71;
 }
@@ -702,4 +724,21 @@ float: right;
   /* Add clear property to avoid affecting other elements */
   clear: both;
   padding: 30px;
+}
+
+.text-sender{
+  width: 180px;
+  padding: 20px;
+}
+
+.upvote-btn {
+  content: "\1F44E";
+  padding: 10px;
+}
+.downvote-btn, .vote_count {
+  padding: 10px;
+}
+.text-sender {
+  font-size: 25px;
+
 }

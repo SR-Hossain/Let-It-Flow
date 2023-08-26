@@ -28,6 +28,8 @@ anonymousButton.innerHTML = `
 <input class="pristine" type="checkbox" name="toggle" value="on">
 `;
 
+const white_tick = `<i class="fa fa-check" style="font-size:48px;color:white"></i>`;
+
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -157,6 +159,7 @@ function login(){
                 </div>
               </fieldset>
               <button id="registerButton" type="loginButton" class="btn-signup" onclick="event.preventDefault()">Register</button>
+              <div class="error">---<div>
             </form>
           </div>
         </div>
@@ -175,13 +178,6 @@ function login(){
 
 
 
-
-
-  // questionsContainer.innerHTML = `
-  //     <input type="text" placeholder="Username" class="text input-text input-username btn">
-  //     <input type="password" placeholder="Type Password Here..." class="text btn input-password input-text">
-  //     <button class="text post btn text" id="loginButton">Login</button>
-  // `;
 document.getElementById('loginButton').addEventListener('click', authentication);
 document.getElementById('registerButton').addEventListener('click', register);
 
@@ -190,7 +186,13 @@ document.getElementById('registerButton').addEventListener('click', register);
 async function register(){
   const username = document.getElementById('signup-email').value;
   const password = document.getElementById('signup-password').value;
+  const passwordConfirm = document.getElementById('signup-password-confirm').value;
+
   const errorDiv= document.querySelector('.error');
+  if(password != passwordConfirm){
+    errorDiv.textContent = 'Passwords do not match';
+    return;
+  }
   const signupData = { username, password };
 
   // Send a POST request to the /login route
@@ -262,23 +264,32 @@ function rightPanelTopBar(){
         let rootPost = post.root_post;
         if (rootPost === null)rootPost = ' ';
         topQuestionPanel.innerHTML = `
-          <button onclick="sendTo('/${rootPost}')">
+          <button onclick="sendTo('/${rootPost}')" class="arrow_left">
             <i class="text fas fa-arrow-left"></i> <!-- Font Awesome left arrow icon -->
           </button>
           <div class="text selected_question btn post">
                 <a class="text fake-link-long" href="/${post.post_id}">
-                  <div class="text post">${post.post}</div>
+                  <div class="text post text-post">${post.post}</div>
                 </a>
+                <div class="userandreaction">
+              <div class="useruser">
               <button class="text btn user-id-short" onclick="showChatBoxInRightPanel('${post.user_id}')">
                 ${post.user_id}
                 <div class="text post-created">${post.post_created}</div>
-              </button>
-                  <button class="text upvote-btn small-btn btn" onclick="handleVote(${post.post_id}, 1, this.nextElementSibling)"><i class="text fas fa-chevron-up"></i></button>
-                  <button class="text vote_count small-btn btn"></button> <!-- Corrected this line -->
-                  <button class="text downvote-btn small-btn btn" onclick="handleVote(${post.post_id}, -1, this.previousElementSibling)"><i class="text fas fa-chevron-down"></i></button>
+                </div>
+                <div class="all-reactions">
 
-                  <div class="text replies-info"></div>
+                  <p class="text replies-info"></p>
+
+                  <button class="text upvote-btn small-btn btn postSequenceU${post.post_id}" onclick="handleVote(${post.post_id}, 1, this.nextElementSibling)"><i class="text fa fa-thumbs-up"></i></button>
+                  <button class="text vote_count small-btn btn"></button> <!-- Corrected this line -->
+                  <button class="text downvote-btn small-btn btn postSequenceD${post.post_id}" onclick="handleVote(${post.post_id}, -1, this.previousElementSibling)"><i class="text fa fa-thumbs-down"></i></button>
             </div>
+
+            </div>
+                </div>
+
+
 
           </div>
         `;
@@ -313,23 +324,21 @@ function rightPanelGetReplies(){
         replies.forEach(reply => {
           const replyDiv = document.createElement('div');
           replyDiv.innerHTML = `
-            <div class="text reply-section" onclick="showChatBoxInRightPanel('${reply.user_id}')">
-              <a href="/${reply.post_id}" class="text fake-link comments">
-                <div class="text sender">${reply.user_id} (${reply.role}) → ${reply.post_created}</div>
+            <div class="text reply-section fake-link comments"" >
+
+                <div class="text sender text-sender btn" onclick="showChatBoxInRightPanel('${reply.user_id}')">${reply.user_id} (${reply.role}) → ${reply.post_created}</div>
+                <a href="/${reply.post_id}" class="text fake-link comments">
                 <div class="text clickOnReplies">${reply.post}</div>
-                <div class="text divider"></div> <!-- Dividing line -->
-                <div class="text replies-info"></div>
-              </a>
-              <div class="text vote-section">
-                <div class="text vote-buttons">
-                  <button class="text upvote-btn small-btn btn postSequenceU${reply.post_id}" onclick="handleVote(${reply.post_id}, 1, this.nextElementSibling)"><i class="text fas fa-chevron-up"></i></button>
+                </a>
+                <div class="all-reactions">
+                  <p class="text replies-info"></p>
+
+                  <button class="text upvote-btn small-btn btn postSequenceU${reply.post_id}" onclick="handleVote(${reply.post_id}, 1, this.nextElementSibling)"><i class="text fa fa-thumbs-up"></i></button>
                   <button class="text vote_count small-btn btn"></button> <!-- Corrected this line -->
-                  <button class="text downvote-btn small-btn btn postSequenceD${reply.post_id}" onclick="handleVote(${reply.post_id}, -1, this.previousElementSibling)"><i class="text fas fa-chevron-down"></i></button>
+                  <button class="text downvote-btn small-btn btn postSequenceD${reply.post_id}" onclick="handleVote(${reply.post_id}, -1, this.previousElementSibling)"><i class="text fa fa-thumbs-down"></i></button>
                 </div>
-              </div>
             </div>
           `;
-
           updateVoteText(replyDiv.querySelector('.vote_count'), replyDiv.querySelector('.replies-info'), reply.post_id);
           repliesContainer.appendChild(replyDiv);
 
@@ -419,6 +428,7 @@ function showQuestionsInLeftPanel(){
       questionsContainer.innerHTML='';
       posts.forEach(post => {
         const postDiv = document.createElement('div');
+        const post_msg = post.post.slice(0, 250);
         postDiv.innerHTML = `
           <div class="text one_quesion">
             <button class="text btn user-id" onclick="showChatBoxInRightPanel('${post.user_id}')">
@@ -427,7 +437,7 @@ function showQuestionsInLeftPanel(){
             </button>
               <button class="text btn post">
                 <a class="text fake-link" href='/${post.post_id}')">
-                  <div class="text post">${post.post}</div>
+                  <div class="text post">${post_msg}...</div>
                 </a>
               </button>
           </div>
@@ -763,7 +773,7 @@ function showChatBoxInRightPanel(user){
             </button>
           `;
         commentBox.querySelector('.comment-submit-btn').addEventListener('click', function(){
-          sendMessage(user, commentBox.querySelector('.nobg').value);
+          sendMessage(user, commentBox.querySelector('.nobg').value, 0);
         });
 
 

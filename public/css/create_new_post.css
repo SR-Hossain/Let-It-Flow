@@ -10,7 +10,7 @@
     bottom: -360px;
     left: 0;
     width: 100%;
-    height: 100px; /* Adjust height as needed */
+    height: 80px; /* Adjust height as needed */
     z-index: 2;
 }
 
@@ -39,13 +39,17 @@ span {
 
 .spacious {
   display: inline-flex;
-  min-height: 100px;
+  min-height: 80px;
   max-height: 300px;
   width: 27px;
   border: 2.35px solid black;
   border-radius: 50px;
   box-shadow: 0 0 2px rgba(0, 0, 0, 0.75), inset 0 0 2px rgba(0, 0, 0, 0.45);
   animation: letter 3s forwards;
+}
+
+.comments {
+  flex: 1;
 }
 
 .nobg {
@@ -58,7 +62,10 @@ span {
   max-height: 300px;
   resize: none;
 }
-
+.text-sender {
+  font-size: 20px;
+  height: 200px;
+}
 
 @keyframes letter {
   0%, 30% { width: 27px; }

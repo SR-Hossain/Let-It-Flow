@@ -154,7 +154,7 @@ app.get('/getQuestions', (req, res) => {
   const query = `
   SELECT post_id, post, role, root_post, DATE_FORMAT(post_created, '%h:%i:%s%p, %d %b %Y') as post_created,
        CASE WHEN anonymous = 1 THEN 'Anonymous' ELSE user_id END AS user_id
-  FROM posts natural join users
+  FROM posts natural join (select user_id, role from users)users
   WHERE root_post is null;
   `;
   db.query(query, (err, results) => {
@@ -181,15 +181,44 @@ app.get('/getResults', (req, res) => {
   const placeholders = searchWords.map(() => '?').join(', ');
 
   // Construct the WHERE clause to search for each word
-  const whereClause = '(' + searchWords.map(word => `(post LIKE '%${word}%')+(user_id like '${word}%')`).join(' + ')  + ')';
+  const whereClause = '(' + searchWords.map(word => `(posts.post LIKE '%${word}%')+(users.user_id like '${word}%')`).join(' + ')  + ')';
 
   const queryParams = searchWords.map(word => `%${word}%`);
 
   // Use the WHERE clause and placeholders in the query
-  const query = `SELECT unique
-  post_id, post, role, root_post, DATE_FORMAT(post_created, '%h:%i:%s%p, %d %b %Y') as post_created,
+  const query = `
+   SELECT
+    posts.post_id,
+    posts.post,
+    users.role,
+    posts.root_post,
+    DATE_FORMAT(posts.post_created, '%h:%i:%s%p, %d %b %Y') AS post_created,
+    CASE
+        WHEN posts.anonymous = 1 THEN 'Anonymous'
+        ELSE users.user_id
+    END AS user_id,
+    ${whereClause} AS match_count,
+    posts.anonymous
+FROM
+    posts
+JOIN
+    users ON users.user_id = posts.user_id
+WHERE
+    (
+        ${whereClause}
+        OR posts.post_id = ${postIdNum}
+    )
+ORDER BY
+    match_count DESC;
+
+
+  `;
+/*
+  const query = `
+  SELECT unique
+  post_id, post, user.role, root_post, DATE_FORMAT(post_created, '%h:%i:%s%p, %d %b %Y') as post_created,
        CASE WHEN anonymous = 1 THEN 'Anonymous' ELSE user_id END AS user_id,
-        ${whereClause} AS match_count FROM posts natural join users WHERE ${whereClause} or post_id=${postIdNum} or post_id div 10=${postIdNum} or post_id div 100=${postIdNum} or post_id div 1000=${postIdNum} or post_id div 10000=${postIdNum} ORDER BY match_count DESC`;
+        ${whereClause} AS match_count FROM posts, users where users.user_id=posts.user_id (${whereClause} or post_id=${postIdNum}) ORDER BY match_count DESC`;*/
 
   db.query(query, (err, results) => {
     if (err) {
@@ -204,10 +233,10 @@ app.get('/getResults', (req, res) => {
 app.get('/getReplies=:postId', (req, res) => {
   const postId = req.params.postId;
   const query = `
-  SELECT post_id, post, role, root_post, DATE_FORMAT(post_created, '%h:%i:%s%p, %d %b %Y') as post_created,
+  SELECT post_id, (select solution from posts where post_id=${postId}) as solutions, post, role, root_post, DATE_FORMAT(post_created, '%h:%i:%s%p, %d %b %Y') as post_created,
         CASE WHEN anonymous = 1 THEN 'Anonymous' ELSE user_id END AS user_id,
         (select coalesce(sum(reactions.vote),0) from reactions natural join users where posts.post_id=reactions.post_id) as votes
-  FROM posts natural join users
+  FROM posts natural join (select user_id, role from users)users
   WHERE root_post=${postId}
   ORDER BY votes desc, post_created DESC;
   `;
@@ -224,7 +253,7 @@ app.get('/getPost=:postId', (req, res) => {
   const query = `
   SELECT post_id, role, post, root_post, DATE_FORMAT(post_created, '%h:%i:%s%p, %d %b %Y') as post_created,
        CASE WHEN anonymous = 1 THEN 'Anonymous' ELSE user_id END AS user_id
-  FROM posts natural join users
+  FROM posts natural join (select user_id, role from users)users
   WHERE post_id = ${postId};
   `;
   console.log(query);
@@ -283,6 +312,20 @@ app.post('/setReaction', authenticateUser, (req, res)=>{
   })
 });
 
+app.post('/setReaction', authenticateUser, (req, res)=>{
+  const userId = req.user.username;
+  const username = req.body.username;
+  const postId = req.body.postId;
+  const vote = req.body.voteType;
+  if(userId!=username)return res.status(500).json({error: 'Error fetching posts'});
+  const command = `
+  update posts set solution=${replyId} where post_id=${postId};
+  `;
+  db.query(command, (err, results)=>{
+    if(err)return res.status(500).json({error: 'Error fetching posts'});
+    return res.status(200).json({message: 'success'});
+  })
+});
 
 app.post('/getPostWhereCurrentUserReactionExists', authenticateUser, (req, res)=>{
   const userId = req.user.username;
@@ -316,7 +359,12 @@ app.post('/login', async (req, res) => {
 
     db.query(`select password from users where user_id=?`, username, (err, results)=>{
       if(err)return  res.status(500).json({error: 'Error!!!'});
-      const hashedPass = results[0].password;
+      let hashedPass = '';
+      try {
+       hashedPass = results[0].password;
+      }catch(error){
+        return res.status(500).json({erro: 'Error!!'});
+      }
       const isPasswordValid = bcrypt.compare(password, hashedPass);
       if (!isPasswordValid) return res.status(401).json({ message: 'Authentication failed' });
       const token = jwt.sign({ username: username }, jwtSecretKey, {expiresIn: '1h'});
@@ -333,9 +381,11 @@ app.post('/signup', async (req, res) => {
     if (!username) return res.status(401).json({ message: 'Authentication failed' });
 
     const hashedPass = await bcrypt.hash(password, salt);
+    console.log(hashedPass);
 
     db.query(`insert into users(user_id, password) values(?, ?)`, [username, password], (err, results)=>{
       if(err)return res.status(409).json({ error: err.sqlMessage });
+      console.log('eikhane ashse re vai');
       db.query(`update users set password=? where user_id=?`, [hashedPass, username]);
       return res.status(200).json(results);
     });
@@ -514,7 +564,7 @@ admin_app.get('/searchPosts', (req, res) => {
   const query = `SELECT unique
   post_id, post, role, root_post, DATE_FORMAT(post_created, '%h:%i:%s%p, %d %b %Y') as post_created,
        CASE WHEN anonymous = 1 THEN 'Anonymous' ELSE user_id END AS user_id,
-        ${whereClause} AS match_count FROM posts natural join users WHERE ${whereClause} or post_id=${postIdNum} or post_id div 10=${postIdNum} or post_id div 100=${postIdNum} or post_id div 1000=${postIdNum} or post_id div 10000=${postIdNum} ORDER BY match_count DESC`;
+        ${whereClause} AS match_count FROM posts natural join (select user_id, role from users)users WHERE ${whereClause} or post_id=${postIdNum} or post_id div 10=${postIdNum} or post_id div 100=${postIdNum} or post_id div 1000=${postIdNum} or post_id div 10000=${postIdNum} ORDER BY match_count DESC`;
 
   db.query(query, (err, results) => {
     if (err) {
@@ -614,7 +664,7 @@ moderator_app.post('/removeUser', authenticateUser, (req, res)=>{
 moderator_app.post('/removePost', authenticateUser, (req, res)=>{
   const postId = req.body.postId;
   const command = `
-    delete from posts natural join users where post_id=${postId} and role!='Admin' and role!='Moderator'
+    delete from posts natural join (select user_id, role from users)users where post_id=${postId} and role!='Admin' and role!='Moderator'
   `;
   db.query(command, (err, results)=>{
     if(err)return res.status(500).json({error: 'Error fetching posts'});
@@ -636,7 +686,7 @@ moderator_app.get('/searchPosts', (req, res) => {
   const query = `SELECT unique
   post_id, post, role, root_post, DATE_FORMAT(post_created, '%h:%i:%s%p, %d %b %Y') as post_created,
        CASE WHEN anonymous = 1 THEN 'Anonymous' ELSE user_id END AS user_id,
-        ${whereClause} AS match_count FROM posts natural join users WHERE role!='Admin' and role!='Moderator' and (${whereClause} or post_id=${postIdNum} or post_id div 10=${postIdNum} or post_id div 100=${postIdNum} or post_id div 1000=${postIdNum} or post_id div 10000=${postIdNum}) ORDER BY match_count DESC`;
+        ${whereClause} AS match_count FROM posts natural join (select user_id, role from users)users WHERE role!='Admin' and role!='Moderator' and (${whereClause} or post_id=${postIdNum} or post_id div 10=${postIdNum} or post_id div 100=${postIdNum} or post_id div 1000=${postIdNum} or post_id div 10000=${postIdNum}) ORDER BY match_count DESC`;
 
   db.query(query, (err, results) => {
     if (err) {
