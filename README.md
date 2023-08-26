@@ -18,7 +18,8 @@ Mental Care related platform similar to stackOverflow...
 CREATE TABLE users (
   user_id VARCHAR(255) NOT NULL PRIMARY KEY,
   password VARCHAR(255) NOT NULL,
-  role VARCHAR(255)
+  role VARCHAR(255) default 'General' not null,
+  anonymous boolean default 0 not null
 );
 ```
 
@@ -26,8 +27,8 @@ CREATE TABLE users (
 |----------|--------------|------|-----|---------|-------|
 | user_id  | varchar(255) | NO   | PRI | NULL    |       |
 | password | varchar(255) | NO   |     | NULL    |       |
-| role     | varchar(255) | YES  |     | NULL    |       |
-
+| role     | varchar(255) | NO   |     | General |       |
+| anonymous| tinyint(1)   | NO   |     | 0       |       |
 
 ```mysql
 DELIMITER //
