@@ -17,6 +17,7 @@ const port = 3000;
 const jwtSecretKey = 'f4.tQJRaJjOzI5DqYZ6.guqqKFw14fVjYvXvU1CjGS';
 
 
+
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
